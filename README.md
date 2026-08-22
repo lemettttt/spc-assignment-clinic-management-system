@@ -1,1 +1,1 @@
-# random-assignment
+# spc-assignment-clinic-management-system
