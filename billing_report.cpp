@@ -1,4 +1,4 @@
-/*
+/* SAMPLE CODE ONLY
     ============================================================
     Clinic Management System
     Module: Login Management + Billing & Reporting
