@@ -1,7 +1,7 @@
 /*
     ============================================================
-    Clinic Management System
-    Module: Login Management + Billing & Reporting
+    billing_report.cpp
+    Module: Billing & Reporting
     Author: Lemet
     ============================================================
     This file demonstrates the assigned module ONLY (standalone).
@@ -11,87 +11,50 @@
         Patient Management and Appointment modules
       - medicines/prices could come from the Consultation &
         Medicine Inventory module
-    For now, dummy/sample data is used so this module can be
-    compiled and tested independently.
+
+    Integration notes:
+      - patients        -> owned/maintained by Patient Management (Chia Koh Suan)
+      - consultations    -> owned/maintained by Consultation & Medicine
+                             Inventory (Siow Pei En)
+      - medicineInventory -> owned/maintained by Consultation & Medicine
+                             Inventory (Siow Pei En)
+      Billing only READS these vectors to build a bill; it never
+      adds/edits patient, consultation, or stock records itself.
     ============================================================
 */
 
 #include <iostream>
 #include <iomanip>
-#include <vector>
-#include <string>
+#include "shared_data.h"
 using namespace std;
 
 // ---------------- CONSTANTS ----------------
 const double GENERAL_CONSULT_FEE    = 45.00;
 const double SPECIALIST_CONSULT_FEE = 80.00;
 const double SST_RATE               = 0.06;
-const int    MAX_LOGIN_ATTEMPTS     = 3;
-
-// ---------------- STRUCTURES ----------------
-struct Staff {
-    string username;
-    string password;
-    string role;
-};
-
-struct MedicineItem {
-    string name;
-    int qty;
-    double price;
-};
-
-struct BillRecord {
-    int billID;
-    int patientID;
-    int doctorID;
-    string doctorType;      // "General" or "Specialist"
-    string serviceDate;
-    double consultationFee;
-    double medicineFee;
-    double discount;
-    double sst;
-    double totalAmount;
-    double amountPaid;
-    double changeGiven;
-    bool isPaid;
-    vector<MedicineItem> medicines;
-};
 
 // ---------------- FUNCTION PROTOTYPES ----------------
-bool login(vector<Staff> staffList, string username, string password);
-
 double calculateConsultationFee(string doctorType);
 double calculateMedicineFee(vector<MedicineItem> medicines);
 void   addBillingRecord(vector<BillRecord>& billRecords, BillRecord newBill);
-void   generateBill(vector<BillRecord>& billRecords, int patientID, int doctorID,
-                     string doctorType, string date, vector<MedicineItem> medicines, double discount);
+void   generateBill(vector<BillRecord>& billRecords, Patient patient, Consultation consult,
+                     string doctorType, vector<MedicineItem> medicines, char patientType);
 int    searchBillingRecord(vector<BillRecord> billRecords, int billID);
+double getValidatedPayment();
 bool   processPayment(BillRecord& bill, double amountReceived, char paymentMethod);
 void   printReceipt(BillRecord bill);
 void   generateDailyReport(vector<BillRecord> billRecords, string date);
 void   generateStatisticsReport(vector<BillRecord> billRecords, int reportOption);
-double getValidatedPayment(double minAmount);
-void   billingReportMenu(vector<BillRecord>& billRecords);
 
-// ============================================================
-// LOGIN MANAGEMENT
-// ============================================================
-bool login(vector<Staff> staffList, string username, string password) {
-    // linear search through staff list (vector) to validate credentials
-    for (int i = 0; i < (int)staffList.size(); i++) {
-        if (staffList[i].username == username && staffList[i].password == password) {
-            return true;
-        }
-    }
-    return false;
-}
+// read-only helpers over shared data (billing does not own these records)
+int findPatientIndex(vector<Patient> patients, int patientID);
+int findLatestConsultation(vector<Consultation> consultations, int patientID);
+int findMedicineIndex(vector<Medicine> medicineInventory, int medicineID);
 
 // ============================================================
 // BILLING FUNCTIONS
 // ============================================================
 double calculateConsultationFee(string doctorType) {
-    // selection: if-else
     if (doctorType == "Specialist") {
         return SPECIALIST_CONSULT_FEE;
     } else {
@@ -101,7 +64,6 @@ double calculateConsultationFee(string doctorType) {
 
 double calculateMedicineFee(vector<MedicineItem> medicines) {
     double total = 0;
-    // repetition: for loop over vector
     for (int i = 0; i < (int)medicines.size(); i++) {
         total += medicines[i].qty * medicines[i].price;
     }
@@ -109,26 +71,33 @@ double calculateMedicineFee(vector<MedicineItem> medicines) {
 }
 
 void addBillingRecord(vector<BillRecord>& billRecords, BillRecord newBill) {
-    // pass-by-reference: directly modifies the shared vector
     billRecords.push_back(newBill);
     cout << "\nBill generated successfully. Bill ID: " << newBill.billID << endl;
 }
 
-void generateBill(vector<BillRecord>& billRecords, int patientID, int doctorID,
-                   string doctorType, string date, vector<MedicineItem> medicines, double discount) {
+void generateBill(vector<BillRecord>& billRecords, Patient patient, Consultation consult,
+                   string doctorType, vector<MedicineItem> medicines, char patientType) {
     BillRecord newBill;
     newBill.billID        = 1000 + (int)billRecords.size() + 1;
-    newBill.patientID     = patientID;
-    newBill.doctorID      = doctorID;
+    newBill.patientID     = patient.patientID;
+    newBill.doctorID      = consult.doctorID;
     newBill.doctorType    = doctorType;
-    newBill.serviceDate   = date;
+    newBill.serviceDate   = consult.date;       // shared data: from Consultation module
+    newBill.diagnosis     = consult.diagnosis;  // shared data: from Consultation module
     newBill.medicines     = medicines;
 
-    // return values from calculateConsultationFee() and calculateMedicineFee()
-    // are combined here to produce the final total
     newBill.consultationFee = calculateConsultationFee(doctorType);
     newBill.medicineFee     = calculateMedicineFee(medicines);
-    newBill.discount        = discount;
+
+    double discount = 0;
+    if (patientType == 'S' || patientType == 's') {
+        discount = newBill.consultationFee * 0.10;
+    } else if (patientType == 'M' || patientType == 'm') {
+        discount = newBill.consultationFee * 0.05;
+    } else {
+        discount = 0;
+    }
+    newBill.discount = discount;
 
     double subtotal = newBill.consultationFee + newBill.medicineFee - discount;
     newBill.sst          = subtotal * SST_RATE;
@@ -142,16 +111,35 @@ void generateBill(vector<BillRecord>& billRecords, int patientID, int doctorID,
 
 int searchBillingRecord(vector<BillRecord> billRecords, int billID) {
     for (int i = 0; i < (int)billRecords.size(); i++) {
-        if (billRecords[i].billID == billID) {
-            return i;   // found - return index
-        }
+        if (billRecords[i].billID == billID) return i;
     }
-    return -1;          // not found
+    return -1;
 }
 
-double getValidatedPayment(double minAmount) {
+int findPatientIndex(vector<Patient> patients, int patientID) {
+    for (int i = 0; i < (int)patients.size(); i++) {
+        if (patients[i].patientID == patientID) return i;
+    }
+    return -1;
+}
+
+int findLatestConsultation(vector<Consultation> consultations, int patientID) {
+    int latest = -1;
+    for (int i = 0; i < (int)consultations.size(); i++) {
+        if (consultations[i].patientID == patientID) latest = i;  // last match = most recent
+    }
+    return latest;
+}
+
+int findMedicineIndex(vector<Medicine> medicineInventory, int medicineID) {
+    for (int i = 0; i < (int)medicineInventory.size(); i++) {
+        if (medicineInventory[i].medicineID == medicineID) return i;
+    }
+    return -1;
+}
+
+double getValidatedPayment() {
     double amount;
-    // repetition: while loop for input validation
     while (true) {
         cout << "Enter payment amount (RM): ";
         cin >> amount;
@@ -166,7 +154,10 @@ double getValidatedPayment(double minAmount) {
 }
 
 bool processPayment(BillRecord& bill, double amountReceived, char paymentMethod) {
-    // nested if: outer checks payment method, inner checks sufficiency
+    if (bill.isPaid) {
+        cout << "This bill has already been paid! Duplicate payment rejected.\n";
+        return false;
+    }
     if (paymentMethod == 'C' || paymentMethod == 'c') {
         if (amountReceived >= bill.totalAmount) {
             bill.amountPaid  = amountReceived;
@@ -213,20 +204,15 @@ void printReceipt(BillRecord bill) {
     cout << (bill.isPaid ? "Status: PAID" : "Status: UNPAID") << "\n\n";
 }
 
-// ============================================================
-// REPORTING FUNCTIONS
-// ============================================================
 void generateDailyReport(vector<BillRecord> billRecords, string date) {
     double totalRevenue = 0;
     int count = 0;
-
     cout << fixed << setprecision(2);
     cout << "\n========================================\n";
     cout << "        DAILY REVENUE REPORT (" << date << ")\n";
     cout << "========================================\n";
     cout << setw(10) << left << "Bill ID" << setw(15) << "Patient ID" << "Total (RM)" << endl;
     cout << "----------------------------------------\n";
-
     for (int i = 0; i < (int)billRecords.size(); i++) {
         if (billRecords[i].serviceDate == date) {
             cout << setw(10) << left << billRecords[i].billID
@@ -244,10 +230,27 @@ void generateDailyReport(vector<BillRecord> billRecords, string date) {
 
 void generateStatisticsReport(vector<BillRecord> billRecords, int reportOption) {
     cout << fixed << setprecision(2);
-
-    // switch: one function covers multiple management report types
     switch (reportOption) {
-        case 1: {  // Doctor workload
+        case 1: {  // Disease statistics
+            cout << "\n----- DISEASE STATISTICS REPORT -----\n";
+            vector<string> diseases;
+            vector<int> caseCount;
+            for (int i = 0; i < (int)billRecords.size(); i++) {
+                string d = billRecords[i].diagnosis;
+                if (d == "") continue;
+                int idx = -1;
+                for (int j = 0; j < (int)diseases.size(); j++) {
+                    if (diseases[j] == d) { idx = j; break; }
+                }
+                if (idx == -1) { diseases.push_back(d); caseCount.push_back(1); }
+                else { caseCount[idx]++; }
+            }
+            for (int i = 0; i < (int)diseases.size(); i++) {
+                cout << diseases[i] << " : " << caseCount[i] << " cases\n";
+            }
+            break;
+        }
+        case 2: {  // Doctor workload
             cout << "\n----- DOCTOR WORKLOAD REPORT -----\n";
             vector<int> doctorIDs;
             vector<int> visitCount;
@@ -257,19 +260,15 @@ void generateStatisticsReport(vector<BillRecord> billRecords, int reportOption) 
                 for (int j = 0; j < (int)doctorIDs.size(); j++) {
                     if (doctorIDs[j] == id) { idx = j; break; }
                 }
-                if (idx == -1) {
-                    doctorIDs.push_back(id);
-                    visitCount.push_back(1);
-                } else {
-                    visitCount[idx]++;
-                }
+                if (idx == -1) { doctorIDs.push_back(id); visitCount.push_back(1); }
+                else { visitCount[idx]++; }
             }
             for (int i = 0; i < (int)doctorIDs.size(); i++) {
                 cout << "Doctor ID " << doctorIDs[i] << " : " << visitCount[i] << " patients seen\n";
             }
             break;
         }
-        case 2: {  // Revenue summary
+        case 3: {  // Revenue summary
             double consultTotal = 0, medTotal = 0, sstTotal = 0, grandTotal = 0;
             for (int i = 0; i < (int)billRecords.size(); i++) {
                 consultTotal += billRecords[i].consultationFee;
@@ -284,7 +283,7 @@ void generateStatisticsReport(vector<BillRecord> billRecords, int reportOption) 
             cout << "Total Revenue     : RM " << grandTotal << endl;
             break;
         }
-        case 3: {  // Medicine usage
+        case 4: {  // Medicine usage
             cout << "\n----- MEDICINE USAGE REPORT -----\n";
             vector<string> names;
             vector<int> quantities;
@@ -296,12 +295,8 @@ void generateStatisticsReport(vector<BillRecord> billRecords, int reportOption) 
                     for (int k = 0; k < (int)names.size(); k++) {
                         if (names[k] == name) { idx = k; break; }
                     }
-                    if (idx == -1) {
-                        names.push_back(name);
-                        quantities.push_back(qty);
-                    } else {
-                        quantities[idx] += qty;
-                    }
+                    if (idx == -1) { names.push_back(name); quantities.push_back(qty); }
+                    else { quantities[idx] += qty; }
                 }
             }
             for (int i = 0; i < (int)names.size(); i++) {
@@ -316,9 +311,10 @@ void generateStatisticsReport(vector<BillRecord> billRecords, int reportOption) 
 }
 
 // ============================================================
-// MENU (do-while + switch)
+// MENU (do-while + switch) — called from main.cpp
 // ============================================================
-void billingReportMenu(vector<BillRecord>& billRecords) {
+void billingReportMenu(vector<BillRecord>& billRecords, vector<Patient>& patients,
+                        vector<Consultation>& consultations, vector<Medicine>& medicineInventory) {
     int choice;
     do {
         cout << "\n========== BILLING & REPORT MENU ==========\n";
@@ -334,27 +330,56 @@ void billingReportMenu(vector<BillRecord>& billRecords) {
 
         switch (choice) {
             case 1: {
-                int patientID, doctorID;
-                string doctorType, date;
-                cout << "Patient ID: "; cin >> patientID;
-                cout << "Doctor ID: "; cin >> doctorID;
-                cout << "Doctor Type (General/Specialist): "; cin >> doctorType;
-                cout << "Date (DD/MM/YYYY): "; cin >> date;
+                int patientID;
+                cout << "Enter Patient ID: "; cin >> patientID;
 
+                // integration: look up the patient in the shared vector instead of
+                // trusting free-typed details (Patient Management owns this data)
+                int pIdx = findPatientIndex(patients, patientID);
+                if (pIdx == -1) {
+                    cout << "Patient not found! Please register this patient in Patient Management first.\n";
+                    break;
+                }
+                Patient patient = patients[pIdx];
+
+                // integration: pull doctorID/date/diagnosis from the patient's latest
+                // consultation record instead of typing them in manually
+                int cIdx = findLatestConsultation(consultations, patientID);
+                if (cIdx == -1) {
+                    cout << "No consultation record found for this patient! Please record a consultation first.\n";
+                    break;
+                }
+                Consultation consult = consultations[cIdx];
+
+                string doctorType;
+                cout << "Doctor Type (General/Specialist): "; cin >> doctorType;
+
+                // integration: look up each medicine's name/price from the shared
+                // inventory instead of letting the user type a price freely
                 vector<MedicineItem> medicines;
                 int medCount;
-                cout << "Number of medicine items: "; cin >> medCount;
+                cout << "Number of medicine items prescribed: "; cin >> medCount;
                 for (int i = 0; i < medCount; i++) {
-                    MedicineItem m;
-                    cout << "  Medicine name: "; cin >> m.name;
-                    cout << "  Quantity: "; cin >> m.qty;
-                    cout << "  Unit price: "; cin >> m.price;
-                    medicines.push_back(m);
+                    int medID, qty;
+                    cout << "  Medicine ID: "; cin >> medID;
+                    int mIdx = findMedicineIndex(medicineInventory, medID);
+                    if (mIdx == -1) {
+                        cout << "  Medicine not found in inventory! Skipping this item.\n";
+                        continue;
+                    }
+                    cout << "  Quantity: "; cin >> qty;
+                    MedicineItem item;
+                    item.medicineID = medID;
+                    item.name  = medicineInventory[mIdx].name;
+                    item.price = medicineInventory[mIdx].price;
+                    item.qty   = qty;
+                    medicines.push_back(item);
                 }
-                double discount;
-                cout << "Discount (RM, 0 if none): "; cin >> discount;
 
-                generateBill(billRecords, patientID, doctorID, doctorType, date, medicines, discount);
+                char patientType;
+                cout << "Patient Type (S=Senior, M=Member, N=Normal): "; cin >> patientType;
+
+                generateBill(billRecords, patient, consult, doctorType, medicines, patientType);
                 break;
             }
             case 2: {
@@ -364,7 +389,7 @@ void billingReportMenu(vector<BillRecord>& billRecords) {
                 if (idx == -1) {
                     cout << "Bill not found!\n";
                 } else {
-                    double amount = getValidatedPayment(0);
+                    double amount = getValidatedPayment();
                     char method;
                     cout << "Payment method (C=Cash, D=Debit): "; cin >> method;
                     processPayment(billRecords[idx], amount, method);
@@ -394,7 +419,7 @@ void billingReportMenu(vector<BillRecord>& billRecords) {
             }
             case 6: {
                 int option;
-                cout << "1. Doctor Workload  2. Revenue Summary  3. Medicine Usage\n";
+                cout << "1. Disease Statistics  2. Doctor Workload  3. Revenue Summary  4. Medicine Usage\n";
                 cout << "Choice: "; cin >> option;
                 generateStatisticsReport(billRecords, option);
                 break;
@@ -406,44 +431,4 @@ void billingReportMenu(vector<BillRecord>& billRecords) {
                 cout << "Invalid choice! Please try again.\n";
         }
     } while (choice != 0);
-}
-
-// ============================================================
-// MAIN
-// ============================================================
-int main() {
-    // sample/dummy staff data (would come from a shared login module in the full system)
-    vector<Staff> staffList = {
-        {"admin", "1234", "Admin"},
-        {"reception1", "pass123", "Receptionist"}
-    };
-
-    vector<BillRecord> billRecords;   // shared billing data structure
-
-    string username, password;
-    bool loggedIn = false;
-    int attempts = 0;
-
-    // do-while: allow limited login attempts
-    do {
-        cout << "Username: "; cin >> username;
-        cout << "Password: "; cin >> password;
-
-        if (login(staffList, username, password)) {
-            loggedIn = true;
-            cout << "\nLogin successful! Welcome, " << username << ".\n";
-        } else {
-            attempts++;
-            cout << "Invalid credentials. Attempts left: " << (MAX_LOGIN_ATTEMPTS - attempts) << "\n";
-        }
-    } while (!loggedIn && attempts < MAX_LOGIN_ATTEMPTS);
-
-    if (loggedIn) {
-        billingReportMenu(billRecords);
-    } else {
-        cout << "\nToo many failed attempts. Exiting system.\n";
-    }
-
-    cout << "\nThank you for using the Clinic Management System.\n";
-    return 0;
 }
