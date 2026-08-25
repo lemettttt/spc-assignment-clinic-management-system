@@ -19,6 +19,8 @@
 #include "appointment_queuemanagement.h"
 #include "teammate_placeholders.h"   // TODO: replace with real headers once ready
 #include "billing_report.h"          // Soo Hui Xin's module
+#include "consultation_medicine.h"
+#include "input_validation.h"
 
 using namespace std;
  
@@ -27,7 +29,6 @@ bool   login(vector<Staff>& staffList, string username, string password);
 void   displayIntroScreen();
 bool   isValidCredentialFormat(string text);
 string getValidatedCredential(string prompt);
-int    getValidatedMenuChoice(int minOption, int maxOption);
  
 // ============================================================
 // INPUT VALIDATION HELPERS
@@ -56,24 +57,8 @@ string getValidatedCredential(string prompt) {
     }
 }
  
-// repetition: while loop + selection: if-else to validate a numeric menu choice
-int getValidatedMenuChoice(int minOption, int maxOption) {
-    int choice;
-    while (true) {
-        cin >> choice;
-        if (cin.fail()) {
-            cin.clear();
-            cin.ignore(1000, '\n');
-            cout << "Invalid input! Please enter a number between "
-                 << minOption << " and " << maxOption << ": ";
-        } else if (choice < minOption || choice > maxOption) {
-            cout << "Invalid choice! Please enter a number between "
-                 << minOption << " and " << maxOption << ": ";
-        } else {
-            return choice;
-        }
-    }
-}
+
+
  
 // ============================================================
 // SYSTEM LOGIN (shared team component)
@@ -136,7 +121,11 @@ int main() {
         cout << "4. Billing & Reporting\n";
         cout << "0. Exit\n";
         cout << "Enter choice: ";
-        choice = getValidatedMenuChoice(0, 4);
+        choice = getValidatedMenuChoice(
+            "Enter choice: ",
+            0,
+            4
+        );
  
         switch (choice) {
             case 1:

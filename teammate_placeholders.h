@@ -46,23 +46,6 @@ inline void patientManagementMenu(vector<Patient>& patients) {
     }
 }
 
-inline void consultationMedicineMenu(vector<Consultation>& consultations,
-                                      vector<Medicine>& medicineInventory,
-                                      vector<Patient>& patients) {
-    cout << "\n[Placeholder] Consultation & Medicine Inventory module not yet integrated.\n";
-    cout << "Adding sample consultation and medicine data for testing purposes...\n";
-    if (consultations.empty()) {
-        Consultation c;
-        c.consultationID = 1; c.patientID = 1; c.doctorID = 101;
-        c.diagnosis = "Common Cold"; c.date = "24/08/2026"; c.followUpDays = 7;
-        consultations.push_back(c);
-    }
-    if (medicineInventory.empty()) {
-        Medicine m1 = {1, "Paracetamol", 100, 2.50, "31/12/2027"};
-        Medicine m2 = {2, "Cough Syrup", 50, 8.00, "30/06/2027"};
-        medicineInventory.push_back(m1);
-        medicineInventory.push_back(m2);
-    }
-}
+
 
 #endif
