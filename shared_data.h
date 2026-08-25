@@ -43,6 +43,7 @@ struct Appointment {
     string date;
     string timeSlot;
     bool isCancelled;
+    bool isServed;
 };
 
 // ---------------- CONSULTATION & MEDICINE INVENTORY (Siow Pei En) ----------------

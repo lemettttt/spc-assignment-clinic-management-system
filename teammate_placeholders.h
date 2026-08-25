@@ -46,10 +46,6 @@ inline void patientManagementMenu(vector<Patient>& patients) {
     }
 }
 
-inline void appointmentQueueMenu(vector<Appointment>& appointments, vector<Patient>& patients) {
-    cout << "\n[Placeholder] Appointment & Queue Management module not yet integrated.\n";
-}
-
 inline void consultationMedicineMenu(vector<Consultation>& consultations,
                                       vector<Medicine>& medicineInventory,
                                       vector<Patient>& patients) {

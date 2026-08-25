@@ -16,8 +16,10 @@
 #include <iostream>
 #include <cctype>
 #include "shared_data.h"
+#include "appointment_queuemanagement.h"
 #include "teammate_placeholders.h"   // TODO: replace with real headers once ready
 #include "billing_report.h"          // Soo Hui Xin's module
+
 using namespace std;
  
 // ---------------- FUNCTION PROTOTYPES ----------------
@@ -158,4 +160,3 @@ int main() {
     cout << "\nThank you for using the Clinic Management System. Goodbye!\n";
     return 0;
 }
- 
