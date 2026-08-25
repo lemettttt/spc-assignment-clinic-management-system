@@ -80,11 +80,147 @@ void displayIntroScreen() {
  
 int main() {
     // ---- Stage 1: shared data storage for the WHOLE system ----
-    vector<Staff> staffList = { {"admin", "1234", "Admin"} };
-    vector<Patient> patients;
-    vector<Appointment> appointments;
-    vector<Consultation> consultations;
-    vector<Medicine> medicineInventory;
+    
+    vector<Staff> staffList = {{"admin", "1234", "Admin"}};
+
+    // ============================================================
+    // SAMPLE PATIENT DATA
+    // ============================================================
+
+    vector<Patient> patients = {
+        {
+            1,
+            "010101101234",
+            "Ali Ahmad",
+            25,
+            "0123456789",
+            "No known allergies"
+        },
+        {
+            2,
+            "020202081234",
+            "Siti Nur Aisyah",
+            30,
+            "0139876543",
+            "Penicillin allergy"
+        },
+        {
+            3,
+            "990303101234",
+            "Lim Wei Ming",
+            27,
+            "0164567890",
+            "Shellfish allergy"
+        },
+        {
+            4,
+            "950505101234",
+            "Tan Mei Ling",
+            31,
+            "0171234567",
+            "None"
+        }
+    };
+
+
+    // ============================================================
+    // SAMPLE APPOINTMENT DATA
+    // ============================================================
+
+    vector<Appointment> appointments = {
+        {1, 1, 101, "25/08/2026", "09:00 AM", false, false},
+        {2, 2, 101, "25/08/2026", "10:00 AM", false, false},
+        {3, 3, 102, "26/08/2026", "02:00 PM", false, false}
+    };
+
+
+    // ============================================================
+    // SAMPLE CONSULTATION DATA
+    // ============================================================
+
+    vector<Consultation> consultations = {
+        {
+            1,
+            1,
+            101,
+            "Common Cold",
+            "15/08/2026",
+            7
+        },
+        {
+            2,
+            1,
+            101,
+            "Fever and Sore Throat",
+            "20/08/2026",
+            3
+        },
+        {
+            3,
+            2,
+            102,
+            "Gastritis",
+            "18/08/2026",
+            14
+        },
+        {
+            4,
+            3,
+            101,
+            "Skin Allergy",
+            "10/08/2026",
+            7
+        }
+    };
+
+
+    // ============================================================
+    // SAMPLE MEDICINE INVENTORY
+    // ============================================================
+
+    vector<Medicine> medicineInventory = {
+        {
+            1,
+            "Paracetamol",
+            100,
+            2.50,
+            "31/12/2027"
+        },
+        {
+            2,
+            "Amoxicillin",
+            5,
+            8.00,
+            "15/09/2026"
+        },
+        {
+            3,
+            "Cough Syrup",
+            30,
+            12.50,
+            "30/06/2027"
+        },
+        {
+            4,
+            "Antihistamine",
+            8,
+            6.50,
+            "01/09/2026"
+        },
+        {
+            5,
+            "Vitamin C",
+            50,
+            15.00,
+            "10/08/2026"
+        }
+    };
+
+
+    // ============================================================
+    // SAMPLE BILLING RECORDS
+    // ============================================================
+
     vector<BillRecord> billRecords;
  
     displayIntroScreen();

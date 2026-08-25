@@ -193,4 +193,43 @@ inline int getValidatedMenuChoice(
     }
 }
 
+// ============================================================
+// PRESS 0 TO CONTINUE
+// ============================================================
+
+inline void pressZeroToContinue() {
+    int choice;
+
+    while (true) {
+        cout << "\nPress 0 to continue: ";
+        cin >> choice;
+
+        if (cin.fail()) {
+            cin.clear();
+            cin.ignore(
+                numeric_limits<streamsize>::max(),
+                '\n'
+            );
+
+            cout << "Invalid input. Please enter 0.\n";
+        }
+        else if (choice != 0) {
+            cin.ignore(
+                numeric_limits<streamsize>::max(),
+                '\n'
+            );
+
+            cout << "Invalid input. Please enter 0.\n";
+        }
+        else {
+            cin.ignore(
+                numeric_limits<streamsize>::max(),
+                '\n'
+            );
+
+            break;
+        }
+    }
+}
+
 #endif
