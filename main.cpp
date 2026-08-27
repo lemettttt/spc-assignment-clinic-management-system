@@ -1,287 +1,74 @@
-/*  need to do input validation
-    ============================================================
-    Clinic Management System
-    main.cpp — TEAM SHARED FILE
-    ============================================================
-    This is the single entry point for the whole system. It is a
-    TEAM responsibility (System Architecture / Main menu &
-    navigation / Shared data management per the assignment spec),
-    not any one member's individual module.
-
-    Swap "teammate_placeholders.h" below for the real headers once
-    Chia Koh Suan / Pah Yan Han / Siow Pei En finish their modules.
-    ============================================================
-*/
+//===========================================================
+// main.cpp — Clinic Management System
+// Main menu & navigation / Login & authentication
+//============================================================
 
 #include <iostream>
 #include <cctype>
-#include "shared_data.h"
+#include "clinic_shared.h"
+#include "input_utils.h"
+#include "login_module.h"
+#include "patient_module.h"
 #include "appointment_queuemanagement.h"
-#include "teammate_placeholders.h"   // TODO: replace with real headers once ready
-#include "billing_report.h"          // Soo Hui Xin's module
 #include "consultation_medicine.h"
-#include "input_validation.h"
-
+#include "billing_report.h"          
 using namespace std;
- 
-// ---------------- FUNCTION PROTOTYPES ----------------
-bool   login(vector<Staff>& staffList, string username, string password);
-void   displayIntroScreen();
-bool   isValidCredentialFormat(string text);
-string getValidatedCredential(string prompt);
- 
-// ============================================================
-// INPUT VALIDATION HELPERS
-// ============================================================
- 
-// selection: checks every character is a letter or digit (no symbols/spaces)
-bool isValidCredentialFormat(string text) {
-    if (text.empty()) return false;
-    for (int i = 0; i < (int)text.size(); i++) {
-        if (!isalnum((unsigned char)text[i])) {
-            return false;
-        }
-    }
-    return true;
-}
- 
-// repetition: while loop re-prompts until the format is valid
-string getValidatedCredential(string prompt) {
-    string value;
-    while (true) {
-        cout << prompt; cin >> value;
-        if (isValidCredentialFormat(value)) {
-            return value;
-        }
-        cout << "Invalid input! Only letters and numbers are allowed (no symbols/spaces).\n";
-    }
-}
- 
 
 
- 
-// ============================================================
-// SYSTEM LOGIN (shared team component)
-// ============================================================
-bool login(vector<Staff>& staffList, string username, string password) {
-    for (int i = 0; i < (int)staffList.size(); i++) {
-        if (staffList[i].username == username && staffList[i].password == password) {
-            return true;
-        }
-    }
-    return false;
-}
- 
 void displayIntroScreen() {
-    cout << "========================================\n";
-    cout << "     CLINIC MANAGEMENT SYSTEM\n";
-    cout << "========================================\n\n";
+    cout << "======================================================\n";
+    cout << "         TARUMT CLINIC MANAGEMENT SYSTEM\n";
+    cout << "======================================================\n";
+    cout << "  Welcome! This system helps manage patients,\n";
+    cout << "  appointments, consultations, medicine stock,\n";
+    cout << "  and billing for the clinic.\n";
+    cout << "======================================================\n";
 }
- 
+
+
 int main() {
-    // ---- Stage 1: shared data storage for the WHOLE system ----
-    
-    vector<Staff> staffList = {{"admin", "1234", "Admin"}};
-
-    // ============================================================
-    // SAMPLE PATIENT DATA
-    // ============================================================
-
-    vector<Patient> patients = {
-        {
-            1,
-            "010101101234",
-            "Ali Ahmad",
-            25,
-            "0123456789",
-            "No known allergies"
-        },
-        {
-            2,
-            "020202081234",
-            "Siti Nur Aisyah",
-            30,
-            "0139876543",
-            "Penicillin allergy"
-        },
-        {
-            3,
-            "990303101234",
-            "Lim Wei Ming",
-            27,
-            "0164567890",
-            "Shellfish allergy"
-        },
-        {
-            4,
-            "950505101234",
-            "Tan Mei Ling",
-            31,
-            "0171234567",
-            "None"
-        }
-    };
-
-
-    // ============================================================
-    // SAMPLE APPOINTMENT DATA
-    // ============================================================
-
-    vector<Appointment> appointments = {
-        {1, 1, 101, "25/08/2026", "09:00 AM", false, false},
-        {2, 2, 101, "25/08/2026", "10:00 AM", false, false},
-        {3, 3, 102, "26/08/2026", "02:00 PM", false, false}
-    };
-
-
-    // ============================================================
-    // SAMPLE CONSULTATION DATA
-    // ============================================================
-
-    vector<Consultation> consultations = {
-        {
-            1,
-            1,
-            101,
-            "Common Cold",
-            "15/08/2026",
-            7
-        },
-        {
-            2,
-            1,
-            101,
-            "Fever and Sore Throat",
-            "20/08/2026",
-            3
-        },
-        {
-            3,
-            2,
-            102,
-            "Gastritis",
-            "18/08/2026",
-            14
-        },
-        {
-            4,
-            3,
-            101,
-            "Skin Allergy",
-            "10/08/2026",
-            7
-        }
-    };
-
-
-    // ============================================================
-    // SAMPLE MEDICINE INVENTORY
-    // ============================================================
-
-    vector<Medicine> medicineInventory = {
-        {
-            1,
-            "Paracetamol",
-            100,
-            2.50,
-            "31/12/2027"
-        },
-        {
-            2,
-            "Amoxicillin",
-            5,
-            8.00,
-            "15/09/2026"
-        },
-        {
-            3,
-            "Cough Syrup",
-            30,
-            12.50,
-            "30/06/2027"
-        },
-        {
-            4,
-            "Antihistamine",
-            8,
-            6.50,
-            "01/09/2026"
-        },
-        {
-            5,
-            "Vitamin C",
-            50,
-            15.00,
-            "10/08/2026"
-        }
-    };
-
-
-    // ============================================================
-    // SAMPLE BILLING RECORDS
-    // ============================================================
-
-    vector<BillRecord> billRecords;
- 
+    seedSharedData();          // 放入demo资料（含预设登入帐号，见clinic_shared.cpp）
     displayIntroScreen();
- 
-    // ---- System Login (shared, applies to whole system) ----
-    string username, password;
-    bool loggedIn = false;
-    int attempts = 0;
-    do {
-        username = getValidatedCredential("Username: ");
-        password = getValidatedCredential("Password: ");
- 
-        if (login(staffList, username, password)) {
-            loggedIn = true;
-            cout << "\nLogin successful! Welcome, " << username << ".\n";
-        } else {
-            attempts++;
-            cout << "Invalid credentials. Attempts left: " << (MAX_LOGIN_ATTEMPTS - attempts) << "\n";
-        }
-    } while (!loggedIn && attempts < MAX_LOGIN_ATTEMPTS);
- 
-    if (!loggedIn) {
-        cout << "\nToo many failed attempts. Exiting system.\n";
-        return 0;
-    }
- 
-    // ---- Main Menu: one option per MAJOR functional area ----
+    authenticationGate();      // 登入成功前，程序会一直停在这个关卡
+
     int choice;
+    // Use do-while loop to enter the main menu loop until the user chooses to exit
     do {
-        cout << "\n============ MAIN MENU ============\n";
+        cout << "\n===================== MAIN MENU =====================\n";
         cout << "1. Patient Management\n";
         cout << "2. Appointment & Queue Management\n";
         cout << "3. Consultation & Medicine Inventory\n";
         cout << "4. Billing & Reporting\n";
-        cout << "0. Exit\n";
-        cout << "Enter choice: ";
-        choice = getValidatedMenuChoice(
-            "Enter choice: ",
-            0,
-            4
-        );
- 
+        cout << "5. Exit\n";
+        cout << "=======================================================\n";
+        choice = readValidatedInt("Enter your choice: ", 1, 5);
+
         switch (choice) {
-            case 1:
-                patientManagementMenu(patients);
+            case 1: 
+                patientManagementMenu();      // Patient module (uses global patients vector)
                 break;
-            case 2:
-                appointmentQueueMenu(appointments, patients);
+                
+            case 2: 
+                appointmentQueueMenu(appointments, patients);   // Appointment module
                 break;
-            case 3:
-                consultationMedicineMenu(consultations, medicineInventory, patients);
+                
+            case 3: 
+                consultationMedicineMenu(consultations, medicines, patients);   // Consultation module
                 break;
-            case 4:
-                billingReportMenu(billRecords, patients, consultations, medicineInventory);
+                
+            case 4: 
+                billingReportMenu(billRecords, patients, consultations, medicines);   // Billing module
+                break;  
+                
+            case 5: 
+                cout << "\n[System] Logging out and returning to login screen...\n";
+                authenticationGate();        // 回到登入画面
                 break;
-            case 0:
-                cout << "Exiting system...\n";
-                break;
+                
+            default: 
+                cout << "[ERROR] Invalid choice. Please enter 1-5.\n";
         }
-    } while (choice != 0);
- 
-    cout << "\nThank you for using the Clinic Management System. Goodbye!\n";
+    } while (choice != 5);
+
     return 0;
 }

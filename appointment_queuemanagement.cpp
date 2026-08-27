@@ -487,9 +487,9 @@ bool checkSlotAvailability(
     for (int i = 0; i < (int)appointments.size(); i++)
     {
         if (appointments[i].doctorID == doctorID &&
-            appointments[i].date == date &&
+            appointments[i].appointmentDate == date &&   // Modified here
             appointments[i].timeSlot == timeSlot &&
-            appointments[i].isCancelled == false)
+            appointments[i].status != "Cancelled")       // Modified here
         {
             return false;
         }
@@ -636,11 +636,15 @@ void bookAppointment(
     newAppointment.doctorID =
         doctorIDs[doctorIndex];
  
+    // Set doctorType (required by clinic_shared.h)
+    // Default to "General" for now, can be customized later
+    newAppointment.doctorType = "General";
+ 
     // --------------------------------------------------------
     // Date
     // --------------------------------------------------------
  
-    newAppointment.date = getValidatedDate(
+    newAppointment.appointmentDate = getValidatedDate(   // Modified here
         "\nEnter Appointment Date (DD/MM/YYYY): ");
  
     // --------------------------------------------------------
@@ -679,14 +683,14 @@ void bookAppointment(
              << setw(5)  << slotCount
              << setw(12) << timeSlots[i];
  
-        if (isSlotInPast(newAppointment.date, timeSlots[i]))
+        if (isSlotInPast(newAppointment.appointmentDate, timeSlots[i]))   // Modified here
         {
             cout << "Passed";
         }
         else if (!checkSlotAvailability(
                      appointments,
                      newAppointment.doctorID,
-                     newAppointment.date,
+                     newAppointment.appointmentDate,   // Modified here
                      timeSlots[i]))
         {
             cout << "Booked";
@@ -721,7 +725,7 @@ void bookAppointment(
     // --------------------------------------------------------
  
     if (isSlotInPast(
-            newAppointment.date,
+            newAppointment.appointmentDate,   // Modified here
             timeSlots[slotIndex]))
     {
         cout << "\n";
@@ -742,7 +746,7 @@ void bookAppointment(
     if (!checkSlotAvailability(
             appointments,
             newAppointment.doctorID,
-            newAppointment.date,
+            newAppointment.appointmentDate,   // Modified here
             newAppointment.timeSlot))
     {
         cout << "\n";
@@ -752,14 +756,13 @@ void bookAppointment(
     }
  
     // --------------------------------------------------------
-    // Generate Appointment ID
+    // Generate Appointment ID and Set Status
     // --------------------------------------------------------
  
     newAppointment.appointmentID =
         generateNextAppointmentID(appointments);
  
-    newAppointment.isCancelled = false;
-    newAppointment.isServed = false;
+    newAppointment.status = "Booked";   // Modified here
  
     // Save appointment
     appointments.push_back(newAppointment);
@@ -787,7 +790,7 @@ void bookAppointment(
  
     cout << left
          << setw(20) << "Date:"
-         << newAppointment.date << endl;
+         << newAppointment.appointmentDate << endl;   // Modified here
  
     cout << left
          << setw(20) << "Time:"
@@ -891,13 +894,13 @@ void cancelAppointment(
         if (appointments[i].appointmentID ==
             appointmentID)
         {
-            if (appointments[i].isCancelled)
+            if (appointments[i].status == "Cancelled")   // Modified here
             {
                 cout << "This appointment is already cancelled.\n";
                 return;
             }
  
-            if (appointments[i].isServed)
+            if (appointments[i].status == "Served")      // Modified here
             {
                 cout << "This appointment has already been served ";
                 cout << "and cannot be cancelled.\n";
@@ -913,7 +916,7 @@ void cancelAppointment(
                  << appointments[i].doctorID << endl;
  
             cout << "Date       : "
-                 << appointments[i].date << endl;
+                 << appointments[i].appointmentDate << endl;   // Modified here
  
             cout << "Time       : "
                  << appointments[i].timeSlot << endl;
@@ -926,7 +929,7 @@ void cancelAppointment(
  
             if (confirm == 1)
             {
-                appointments[i].isCancelled = true;
+                appointments[i].status = "Cancelled";   // Modified here
  
                 cout << "\nAppointment cancelled successfully.\n";
             }
@@ -963,13 +966,13 @@ void rescheduleAppointment(
         if (appointments[i].appointmentID ==
             appointmentID)
         {
-            if (appointments[i].isCancelled)
+            if (appointments[i].status == "Cancelled")   // Modified here
             {
                 cout << "This appointment has already been cancelled.\n";
                 return;
             }
  
-            if (appointments[i].isServed)
+            if (appointments[i].status == "Served")      // Modified here
             {
                 cout << "This appointment has already been served ";
                 cout << "and cannot be rescheduled.\n";
@@ -995,7 +998,7 @@ void rescheduleAppointment(
                  << doctors[doctorIndex] << endl;
  
             cout << "Date       : "
-                 << appointments[i].date << endl;
+                 << appointments[i].appointmentDate << endl;   // Modified here
  
             cout << "Time       : "
                  << appointments[i].timeSlot << endl;
@@ -1061,11 +1064,11 @@ void rescheduleAppointment(
  
                         if (appointments[k].doctorID ==
                                 appointments[i].doctorID &&
-                            appointments[k].date ==
+                            appointments[k].appointmentDate ==   // Modified here
                                 newDate &&
                             appointments[k].timeSlot ==
                                 timeSlots[j] &&
-                            appointments[k].isCancelled == false)
+                            appointments[k].status != "Cancelled")   // Modified here
                         {
                             booked = true;
                             break;
@@ -1127,11 +1130,11 @@ void rescheduleAppointment(
  
                 if (appointments[j].doctorID ==
                         appointments[i].doctorID &&
-                    appointments[j].date ==
+                    appointments[j].appointmentDate ==   // Modified here
                         newDate &&
                     appointments[j].timeSlot ==
                         newTime &&
-                    appointments[j].isCancelled == false)
+                    appointments[j].status != "Cancelled")   // Modified here
                 {
                     cout << "\nThe selected slot is already booked.\n";
                     return;
@@ -1139,7 +1142,7 @@ void rescheduleAppointment(
             }
  
             // Update appointment
-            appointments[i].date = newDate;
+            appointments[i].appointmentDate = newDate;   // Modified here
             appointments[i].timeSlot = newTime;
  
             cout << "\n";
@@ -1210,10 +1213,9 @@ void manageQueue(
              i++)
         {
             if (appointments[i].doctorID == doctorID &&
-                appointments[i].date == date &&
+                appointments[i].appointmentDate == date &&   // Modified here
                 appointments[i].timeSlot == timeSlots[slot] &&
-                appointments[i].isCancelled == false &&
-                appointments[i].isServed == false)
+                appointments[i].status == "Booked")          // Modified here
             {
                 cout << left
                      << setw(10)
@@ -1269,12 +1271,11 @@ void getNextPatientInQueue(
              i++)
         {
             if (appointments[i].doctorID == doctorID &&
-                appointments[i].date == date &&
+                appointments[i].appointmentDate == date &&   // Modified here
                 appointments[i].timeSlot == timeSlots[slot] &&
-                appointments[i].isCancelled == false &&
-                appointments[i].isServed == false)
+                appointments[i].status == "Booked")          // Modified here
             {
-                appointments[i].isServed = true;
+                appointments[i].status = "Served";   // Modified here
  
                 cout << "\n";
                 cout << "=========================================\n";
@@ -1338,7 +1339,7 @@ void displayTodayAppointments(
          i < (int)appointments.size();
          i++)
     {
-        if (appointments[i].date == date)
+        if (appointments[i].appointmentDate == date)   // Modified here
         {
             found = true;
  
@@ -1362,12 +1363,13 @@ void displayTodayAppointments(
                  << setw(15)
                  << appointments[i].timeSlot;
  
-            if (appointments[i].isCancelled)
+            // Modified here: Use status string
+            if (appointments[i].status == "Cancelled")
             {
                 cout << setw(12)
                      << "Cancelled";
             }
-            else if (appointments[i].isServed)
+            else if (appointments[i].status == "Served")
             {
                 cout << setw(12)
                      << "Served";

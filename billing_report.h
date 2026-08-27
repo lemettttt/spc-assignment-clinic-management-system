@@ -1,7 +1,7 @@
 #ifndef BILLING_REPORT_H
 #define BILLING_REPORT_H
 
-#include "shared_data.h"
+#include "clinic_shared.h"
 
 // Entry point called from main.cpp's main menu.
 // Takes shared vectors by reference so billing can read patient and

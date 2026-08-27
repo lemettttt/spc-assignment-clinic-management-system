@@ -4,7 +4,7 @@
 #include <ctime>
 #include <sstream>
 #include "consultation_medicine.h"
-#include "input_validation.h"
+#include "input_utils.h"
 
 using namespace std;
 
@@ -75,7 +75,7 @@ void recordConsultation(
 
     cout << "\n========== RECORD CONSULTATION ==========\n";
 
-    newConsultation.consultationID=getPositiveInt("Enter Consultation ID: ");
+    newConsultation.consultationID = getPositiveInt("Enter Consultation ID: ");
 
     // Check duplicate consultation ID
     if (findConsultationIndex(
@@ -88,8 +88,7 @@ void recordConsultation(
         return;
     }
 
-    newConsultation.patientID =
-        getPositiveInt("Enter Patient ID: ");
+    newConsultation.patientID = getPositiveInt("Enter Patient ID: ");
 
     int patientIndex = findPatientIndex(
         patients,
@@ -103,24 +102,35 @@ void recordConsultation(
         return;
     }
 
-    cout << "Patient Name: "
-         << patients[patientIndex].name << endl;
+    cout << "Patient Name: " << patients[patientIndex].name << endl;
 
-    newConsultation.doctorID =
-        getPositiveInt("Enter Doctor ID: ");
+    newConsultation.doctorID = getPositiveInt("Enter Doctor ID: ");
 
-    newConsultation.diagnosis =
-        getNonEmptyString("Enter Diagnosis: ");
+    // Set doctorType (required by clinic_shared.h)
+    newConsultation.doctorType = "General";   // You can customize later
 
-    newConsultation.date =
-        getNonEmptyString(
-            "Enter Consultation Date (DD/MM/YYYY): "
-        );
+    newConsultation.diagnosis = getNonEmptyString("Enter Diagnosis: ");
 
-    newConsultation.followUpDays =
-        getNonNegativeInt(
-            "Enter Follow-up Days (0 if not required): "
-        );
+    // Use consultationDate instead of date
+    newConsultation.consultationDate = getNonEmptyString("Enter Consultation Date (DD/MM/YYYY): ");
+
+    // Use followUpDate instead of followUpDays
+    cout << "Enter Follow-up Date (DD/MM/YYYY) or 'None' if not required: ";
+    string followUp = getNonEmptyString("");   // getNonEmptyString requires prompt, but we can bypass
+    // Actually, getNonEmptyString always prompts, so better to use a separate function
+    // I'll use a custom input method below:
+
+    // Let's use a simple getline loop to allow "None"
+    string followUpInput;
+    do {
+        cout << "Enter Follow-up Date (DD/MM/YYYY) or 'None' if not required: ";
+        getline(cin, followUpInput);
+        if (!followUpInput.empty()) {
+            break;
+        }
+        cout << "Input cannot be empty. Please enter a value.\n";
+    } while (true);
+    newConsultation.followUpDate = followUpInput;
 
     consultations.push_back(newConsultation);
 
@@ -152,14 +162,9 @@ void viewMedicalHistory(
         return;
     }
 
-    cout << "\nPatient ID: "
-         << patients[patientIndex].patientID << endl;
-
-    cout << "Patient Name: "
-         << patients[patientIndex].name << endl;
-
-    cout << "Allergy History: "
-         << patients[patientIndex].allergyHistory << endl;
+    cout << "\nPatient ID: " << patients[patientIndex].patientID << endl;
+    cout << "Patient Name: " << patients[patientIndex].name << endl;
+    cout << "Allergy History: " << patients[patientIndex].allergyHistory << endl;
 
     bool found = false;
 
@@ -171,27 +176,15 @@ void viewMedicalHistory(
 
             found = true;
 
-            cout << "\nConsultation ID: "
-                 << consultation.consultationID << endl;
+            cout << "\nConsultation ID: " << consultation.consultationID << endl;
+            cout << "Doctor ID: " << consultation.doctorID << endl;
+            cout << "Diagnosis: " << consultation.diagnosis << endl;
+            cout << "Date: " << consultation.consultationDate << endl;   // Changed
 
-            cout << "Doctor ID: "
-                 << consultation.doctorID << endl;
-
-            cout << "Diagnosis: "
-                 << consultation.diagnosis << endl;
-
-            cout << "Date: "
-                 << consultation.date << endl;
-
-            if (consultation.followUpDays > 0) {
-
-                cout << "Follow-up Required: Yes ("
-                     << consultation.followUpDays
-                     << " days)\n";
-            }
-            else {
-
-                cout << "Follow-up Required: No\n";
+            if (consultation.followUpDate != "None" && !consultation.followUpDate.empty()) {
+                cout << "Follow-up Date: " << consultation.followUpDate << endl;
+            } else {
+                cout << "Follow-up: Not required\n";
             }
 
             cout << "------------------------------------------\n";
@@ -220,26 +213,21 @@ bool checkStockAvailability(
 
     if (index == -1) {
         cout << "Error: Medicine ID does not exist.\n";
-        
         return false;
     }
 
     if (quantity <= 0) {
         cout << "Error: Quantity must be greater than 0.\n";
-        
         return false;
     }
 
-    if (medicineInventory[index].stockQty < quantity) {
+    if (medicineInventory[index].quantity < quantity) {   // Changed: stockQty -> quantity
 
         cout << "Insufficient stock.\n";
-        cout << "Available quantity: "
-             << medicineInventory[index].stockQty
-             << endl;
-        
+        cout << "Available quantity: " << medicineInventory[index].quantity << endl;
         return false;
     }
-   
+
     return true;
 }
 
@@ -265,7 +253,6 @@ void prescribeMedicine(
     displayMedicineList(medicineInventory);
 
     medicineID = getPositiveInt("\nEnter Medicine ID: ");
-
     quantity = getPositiveInt("Enter Quantity: ");
 
     if (!checkStockAvailability(
@@ -284,20 +271,12 @@ void prescribeMedicine(
         medicineID
     );
 
-    medicineInventory[index].stockQty -= quantity;
+    medicineInventory[index].quantity -= quantity;   // Changed: stockQty -> quantity
 
     cout << "\nMedicine prescribed successfully.\n";
-
-    cout << "Medicine: "
-         << medicineInventory[index].name
-         << endl;
-
-    cout << "Quantity Prescribed: "
-         << quantity << endl;
-
-    cout << "Remaining Stock: "
-         << medicineInventory[index].stockQty
-         << endl;
+    cout << "Medicine: " << medicineInventory[index].medicineName << endl;   // Changed: name -> medicineName
+    cout << "Quantity Prescribed: " << quantity << endl;
+    cout << "Remaining Stock: " << medicineInventory[index].quantity << endl; // Changed
 
     pressZeroToContinue();
 }
@@ -312,7 +291,6 @@ void displayMedicineList(
 ) {
     if (medicineInventory.empty()) {
         cout << "\nNo medicine records found.\n";
-        
         return;
     }
 
@@ -332,14 +310,12 @@ void displayMedicineList(
 
         cout << left
              << setw(10) << medicine.medicineID
-             << setw(25) << medicine.name
-             << setw(12) << medicine.stockQty
-             << setw(12) << fixed << setprecision(2)
-             << medicine.price
+             << setw(25) << medicine.medicineName   // Changed: name -> medicineName
+             << setw(12) << medicine.quantity       // Changed: stockQty -> quantity
+             << setw(12) << fixed << setprecision(2) << medicine.price
              << setw(15) << medicine.expiryDate
              << endl;
     }
-    
 }
 
 
@@ -355,7 +331,7 @@ void updateMedicineStock(
 
     cout << "\n========== UPDATE MEDICINE STOCK ==========\n";
 
-    medicineID=getPositiveInt("Enter Medicine ID: ");
+    medicineID = getPositiveInt("Enter Medicine ID: ");
 
     int index = findMedicineIndex(
         medicineInventory,
@@ -368,16 +344,12 @@ void updateMedicineStock(
         return;
     }
 
-    quantity=getPositiveInt("Enter quantity to add: ");
+    quantity = getPositiveInt("Enter quantity to add: ");
 
-
-    medicineInventory[index].stockQty += quantity;
+    medicineInventory[index].quantity += quantity;   // Changed: stockQty -> quantity
 
     cout << "\nMedicine stock updated successfully.\n";
-
-    cout << "New Stock Quantity: "
-         << medicineInventory[index].stockQty
-         << endl;
+    cout << "New Stock Quantity: " << medicineInventory[index].quantity << endl; // Changed
     pressZeroToContinue();
 }
 
@@ -393,7 +365,7 @@ void addNewMedicine(
 
     cout << "\n========== ADD NEW MEDICINE ==========\n";
 
-    newMedicine.medicineID=getPositiveInt("Enter Medicine ID: ");
+    newMedicine.medicineID = getPositiveInt("Enter Medicine ID: ");
 
     // Check duplicate Medicine ID
     if (findMedicineIndex(
@@ -406,14 +378,13 @@ void addNewMedicine(
         return;
     }
 
-    newMedicine.name=getNonEmptyString("Enter Medicine Name: ");
+    newMedicine.medicineName = getNonEmptyString("Enter Medicine Name: ");   // Changed: name -> medicineName
 
-    newMedicine.stockQty=getNonNegativeInt("Enter Stock Quantity: ");
+    newMedicine.quantity = getNonNegativeInt("Enter Stock Quantity: ");      // Changed: stockQty -> quantity
 
-    newMedicine.price=getNonNegativeDouble("Enter Medicine Price: RM ");
+    newMedicine.price = getNonNegativeDouble("Enter Medicine Price: RM ");
 
-
-    newMedicine.expiryDate=getNonEmptyString("Enter Expiry Date (DD/MM/YYYY): ");
+    newMedicine.expiryDate = getNonEmptyString("Enter Expiry Date (DD/MM/YYYY): ");
 
     medicineInventory.push_back(newMedicine);
 
@@ -433,7 +404,7 @@ void searchMedicine(
 
     cout << "\n========== SEARCH MEDICINE ==========\n";
 
-    medicineID=getPositiveInt("Enter Medicine ID: ");
+    medicineID = getPositiveInt("Enter Medicine ID: ");
 
     int index = findMedicineIndex(
         medicineInventory,
@@ -446,27 +417,15 @@ void searchMedicine(
         return;
     }
 
-    const Medicine& medicine =
-        medicineInventory[index];
+    const Medicine& medicine = medicineInventory[index];
 
     cout << "\nMedicine Found\n";
+    cout << "Medicine ID: " << medicine.medicineID << endl;
+    cout << "Medicine Name: " << medicine.medicineName << endl;   // Changed
+    cout << "Stock Quantity: " << medicine.quantity << endl;      // Changed
+    cout << "Price: RM " << fixed << setprecision(2) << medicine.price << endl;
+    cout << "Expiry Date: " << medicine.expiryDate << endl;
 
-    cout << "Medicine ID: "
-         << medicine.medicineID << endl;
-
-    cout << "Medicine Name: "
-         << medicine.name << endl;
-
-    cout << "Stock Quantity: "
-         << medicine.stockQty << endl;
-
-    cout << "Price: RM "
-         << fixed << setprecision(2)
-         << medicine.price << endl;
-
-    cout << "Expiry Date: "
-         << medicine.expiryDate << endl;
-    
     pressZeroToContinue();
 }
 
@@ -483,7 +442,7 @@ void deleteMedicine(
 
     cout << "\n========== DELETE MEDICINE ==========\n";
 
-    medicineID=getPositiveInt("Enter Medicine ID: ");
+    medicineID = getPositiveInt("Enter Medicine ID: ");
 
     int index = findMedicineIndex(
         medicineInventory,
@@ -496,11 +455,9 @@ void deleteMedicine(
         return;
     }
 
-    cout << "Medicine: "
-         << medicineInventory[index].name
-         << endl;
+    cout << "Medicine: " << medicineInventory[index].medicineName << endl;   // Changed
 
-    confirm=getYesNo("Are you sure you want to delete this medicine? (Y/N): ");
+    confirm = getYesNo("Are you sure you want to delete this medicine? (Y/N): ");
 
     if (confirm == 'Y' || confirm == 'y') {
 
@@ -531,20 +488,14 @@ void displayLowStockWarning(
 
     for (const Medicine& medicine : medicineInventory) {
 
-        if (medicine.stockQty < threshold) {
+        if (medicine.quantity < threshold) {   // Changed: stockQty -> quantity
 
             found = true;
 
             cout << "\nWARNING: LOW STOCK\n";
-
-            cout << "Medicine: "
-                 << medicine.name << endl;
-
-            cout << "Current Stock: "
-                 << medicine.stockQty << endl;
-
-            cout << "Minimum Level: "
-                 << threshold << endl;
+            cout << "Medicine: " << medicine.medicineName << endl;   // Changed
+            cout << "Current Stock: " << medicine.quantity << endl;  // Changed
+            cout << "Minimum Level: " << threshold << endl;
         }
     }
 
@@ -575,12 +526,8 @@ void checkExpiryDate(
 
     for (const Medicine& medicine : medicineInventory) {
 
-        cout << "Medicine: "
-             << medicine.name << endl;
-
-        cout << "Expiry Date: "
-             << medicine.expiryDate << endl;
-
+        cout << "Medicine: " << medicine.medicineName << endl;   // Changed
+        cout << "Expiry Date: " << medicine.expiryDate << endl;
         cout << "--------------------------------\n";
     }
     pressZeroToContinue();
@@ -588,7 +535,7 @@ void checkExpiryDate(
 
 
 // ============================================================
-// 12. FOLLOW-UP REMINDER
+// 12. FOLLOW-UP REMINDER (updated to use followUpDate)
 // ============================================================
 
 void displayFollowUpReminder(
@@ -601,7 +548,7 @@ void displayFollowUpReminder(
 
     for (const Consultation& consultation : consultations) {
 
-        if (consultation.followUpDays > 0) {
+        if (consultation.followUpDate != "None" && !consultation.followUpDate.empty()) {
 
             int patientIndex = findPatientIndex(
                 patients,
@@ -610,28 +557,15 @@ void displayFollowUpReminder(
 
             found = true;
 
-            cout << "\nPatient ID: "
-                 << consultation.patientID
-                 << endl;
+            cout << "\nPatient ID: " << consultation.patientID << endl;
 
             if (patientIndex != -1) {
-                cout << "Patient Name: "
-                     << patients[patientIndex].name
-                     << endl;
+                cout << "Patient Name: " << patients[patientIndex].name << endl;
             }
 
-            cout << "Consultation Date: "
-                 << consultation.date
-                 << endl;
-
-            cout << "Follow-up Required After: "
-                 << consultation.followUpDays
-                 << " days\n";
-
-            cout << "Diagnosis: "
-                 << consultation.diagnosis
-                 << endl;
-
+            cout << "Consultation Date: " << consultation.consultationDate << endl;   // Changed
+            cout << "Follow-up Date: " << consultation.followUpDate << endl;
+            cout << "Diagnosis: " << consultation.diagnosis << endl;
             cout << "--------------------------------\n";
         }
     }
@@ -683,74 +617,48 @@ void consultationMedicineMenu(
         switch (choice) {
 
             case 1:
-                recordConsultation(
-                    consultations,
-                    patients
-                );
+                recordConsultation(consultations, patients);
                 break;
 
             case 2:
-                viewMedicalHistory(
-                    consultations,
-                    patients
-                );
+                viewMedicalHistory(consultations, patients);
                 break;
 
             case 3:
-                prescribeMedicine(
-                    medicineInventory
-                );
+                prescribeMedicine(medicineInventory);
                 break;
 
             case 4:
-                displayMedicineList(
-                    medicineInventory
-                );
+                displayMedicineList(medicineInventory);
                 pressZeroToContinue();
                 break;
 
             case 5:
-                updateMedicineStock(
-                    medicineInventory
-                );
+                updateMedicineStock(medicineInventory);
                 break;
 
             case 6:
-                addNewMedicine(
-                    medicineInventory
-                );
+                addNewMedicine(medicineInventory);
                 break;
 
             case 7:
-                searchMedicine(
-                    medicineInventory
-                );
+                searchMedicine(medicineInventory);
                 break;
 
             case 8:
-                deleteMedicine(
-                    medicineInventory
-                );
+                deleteMedicine(medicineInventory);
                 break;
 
             case 9:
-                displayLowStockWarning(
-                    medicineInventory,
-                    10
-                );
+                displayLowStockWarning(medicineInventory, 10);
                 break;
 
             case 10:
-                checkExpiryDate(
-                    medicineInventory
-                );
+                checkExpiryDate(medicineInventory);
                 break;
 
             case 11:
-                displayFollowUpReminder(
-                    consultations,
-                    patients
-                );
+                displayFollowUpReminder(consultations, patients);
                 break;
 
             case 12:

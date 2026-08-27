@@ -96,6 +96,7 @@ void registerUser() {
     role = readAlphaOnly("Enter role (e.g. Nurse / Doctor / Pharmacist ): ");
 
     staffList.push_back({ username, password, role });
+    saveStaffData();
     cout << "\n[System] Account registered successfully! You can now log in.\n";
 }
 

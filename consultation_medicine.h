@@ -1,7 +1,7 @@
 #ifndef CONSULTATION_MEDICINE_H
 #define CONSULTATION_MEDICINE_H
 
-#include "shared_data.h"
+#include "clinic_shared.h"
 using namespace std;
 
 // Main menu

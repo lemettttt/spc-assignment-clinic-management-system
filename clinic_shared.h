@@ -125,5 +125,7 @@ extern int nextConsultationID;
 extern int nextMedicineID;
 
 void seedSharedData();
+void saveStaffData();
+void loadStaffData();
 
 #endif

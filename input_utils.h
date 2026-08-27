@@ -40,6 +40,40 @@ string readValidatedPhone(const string& prompt);
 // Read alphabetic-only input, not allowing numbers and symbols
 string readAlphaOnly(const string& prompt);
 
+// Read any integer from user input (no range restriction)
+// Returns the integer entered by the user
+int getValidatedInt(const string& prompt);
 
+// Read a positive integer (greater than 0)
+// Prompts until user enters a valid positive number
+int getPositiveInt(const string& prompt);
+
+// Read a non-negative integer (0 or greater)
+// Prompts until user enters a valid non-negative number
+int getNonNegativeInt(const string& prompt);
+
+// Read any double from user input
+// Returns the double value entered by the user
+double getValidatedDouble(const string& prompt);
+
+// Read a non-negative double (0.0 or greater)
+// Prompts until user enters a valid non-negative number
+double getNonNegativeDouble(const string& prompt);
+
+// Read a non-empty string
+// Rejects empty input and prompts until the user enters something
+string getNonEmptyString(const string& prompt);
+
+// Read a Yes/No response
+// Accepts 'Y', 'y', 'N', 'n' and returns the uppercase character
+char getYesNo(const string& prompt);
+
+// Read a menu choice within a specified range
+// Prompts until the user enters a valid option between minOption and maxOption
+int getValidatedMenuChoice(const string& prompt, int minOption, int maxOption);
+
+// Pause execution and wait for the user to press 0 to continue
+// Used after displaying results so the user can read before the menu reappears
+void pressZeroToContinue();                            
 
 #endif

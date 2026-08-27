@@ -11,27 +11,21 @@
         Patient Management and Appointment modules
       - medicines/prices could come from the Consultation &
         Medicine Inventory module
-
-    Integration notes:
-      - patients        -> owned/maintained by Patient Management (Chia Koh Suan)
-      - consultations    -> owned/maintained by Consultation & Medicine
-                             Inventory (Siow Pei En)
-      - medicineInventory -> owned/maintained by Consultation & Medicine
-                             Inventory (Siow Pei En)
-      Billing only READS these vectors to build a bill; it never
-      adds/edits patient, consultation, or stock records itself.
     ============================================================
 */
 
 #include <iostream>
 #include <iomanip>
-#include "shared_data.h"
+#include "clinic_shared.h" 
+#include "input_utils.h"
+
 using namespace std;
 
 // ---------------- CONSTANTS ----------------
-const double GENERAL_CONSULT_FEE    = 45.00;
-const double SPECIALIST_CONSULT_FEE = 80.00;
-const double SST_RATE               = 0.06;
+// 这些常量已在 clinic_shared.h 中定义，此处删除
+// const double GENERAL_CONSULT_FEE    = 45.00;
+// const double SPECIALIST_CONSULT_FEE = 80.00;
+// const double SST_RATE               = 0.06;
 
 // ---------------- FUNCTION PROTOTYPES ----------------
 double calculateConsultationFee(string doctorType);
@@ -82,8 +76,8 @@ void generateBill(vector<BillRecord>& billRecords, Patient patient, Consultation
     newBill.patientID     = patient.patientID;
     newBill.doctorID      = consult.doctorID;
     newBill.doctorType    = doctorType;
-    newBill.serviceDate   = consult.date;       // shared data: from Consultation module
-    newBill.diagnosis     = consult.diagnosis;  // shared data: from Consultation module
+    newBill.serviceDate   = consult.consultationDate;   // 适配 Consultation 结构体
+    // 注意：BillRecord 没有 diagnosis 字段，所以这行已删除
     newBill.medicines     = medicines;
 
     newBill.consultationFee = calculateConsultationFee(doctorType);
@@ -233,21 +227,9 @@ void generateStatisticsReport(vector<BillRecord> billRecords, int reportOption) 
     switch (reportOption) {
         case 1: {  // Disease statistics
             cout << "\n----- DISEASE STATISTICS REPORT -----\n";
-            vector<string> diseases;
-            vector<int> caseCount;
-            for (int i = 0; i < (int)billRecords.size(); i++) {
-                string d = billRecords[i].diagnosis;
-                if (d == "") continue;
-                int idx = -1;
-                for (int j = 0; j < (int)diseases.size(); j++) {
-                    if (diseases[j] == d) { idx = j; break; }
-                }
-                if (idx == -1) { diseases.push_back(d); caseCount.push_back(1); }
-                else { caseCount[idx]++; }
-            }
-            for (int i = 0; i < (int)diseases.size(); i++) {
-                cout << diseases[i] << " : " << caseCount[i] << " cases\n";
-            }
+            // 由于 BillRecord 没有 diagnosis，此报告暂不可用
+            cout << "Diagnosis data is not stored in BillRecord.\n";
+            cout << "Please link to Consultation records for this report.\n";
             break;
         }
         case 2: {  // Doctor workload
@@ -325,16 +307,13 @@ void billingReportMenu(vector<BillRecord>& billRecords, vector<Patient>& patient
         cout << "5. Generate Daily Report\n";
         cout << "6. Generate Management/Statistics Report\n";
         cout << "0. Back to Main Menu\n";
-        cout << "Enter choice: ";
-        cin >> choice;
+
+        choice = getValidatedMenuChoice("Enter choice: ", 0, 6);
 
         switch (choice) {
             case 1: {
-                int patientID;
-                cout << "Enter Patient ID: "; cin >> patientID;
+                int patientID = getPositiveInt("Enter Patient ID: ");
 
-                // integration: look up the patient in the shared vector instead of
-                // trusting free-typed details (Patient Management owns this data)
                 int pIdx = findPatientIndex(patients, patientID);
                 if (pIdx == -1) {
                     cout << "Patient not found! Please register this patient in Patient Management first.\n";
@@ -342,8 +321,6 @@ void billingReportMenu(vector<BillRecord>& billRecords, vector<Patient>& patient
                 }
                 Patient patient = patients[pIdx];
 
-                // integration: pull doctorID/date/diagnosis from the patient's latest
-                // consultation record instead of typing them in manually
                 int cIdx = findLatestConsultation(consultations, patientID);
                 if (cIdx == -1) {
                     cout << "No consultation record found for this patient! Please record a consultation first.\n";
@@ -351,76 +328,85 @@ void billingReportMenu(vector<BillRecord>& billRecords, vector<Patient>& patient
                 }
                 Consultation consult = consultations[cIdx];
 
-                string doctorType;
-                cout << "Doctor Type (General/Specialist): "; cin >> doctorType;
+                string doctorType = getNonEmptyString("Doctor Type (General/Specialist): ");
 
-                // integration: look up each medicine's name/price from the shared
-                // inventory instead of letting the user type a price freely
                 vector<MedicineItem> medicines;
-                int medCount;
-                cout << "Number of medicine items prescribed: "; cin >> medCount;
+                int medCount = getNonNegativeInt("Number of medicine items prescribed: ");
                 for (int i = 0; i < medCount; i++) {
-                    int medID, qty;
-                    cout << "  Medicine ID: "; cin >> medID;
+                    int medID = getPositiveInt("  Medicine ID: ");
                     int mIdx = findMedicineIndex(medicineInventory, medID);
                     if (mIdx == -1) {
                         cout << "  Medicine not found in inventory! Skipping this item.\n";
                         continue;
                     }
-                    cout << "  Quantity: "; cin >> qty;
+
+                    int qty = getPositiveInt("  Quantity: ");
                     MedicineItem item;
-                    item.medicineID = medID;
-                    item.name  = medicineInventory[mIdx].name;
+                    item.name  = medicineInventory[mIdx].medicineName;
                     item.price = medicineInventory[mIdx].price;
                     item.qty   = qty;
                     medicines.push_back(item);
                 }
 
-                char patientType;
-                cout << "Patient Type (S=Senior, M=Member, N=Normal): "; cin >> patientType;
+                string patientTypeInput;
+                while (true) {
+                    patientTypeInput = getNonEmptyString("Patient Type (S=Senior, M=Member, N=Normal): ");
+                    if (patientTypeInput.length() == 1) {
+                        char c = toupper(patientTypeInput[0]);
+                        if (c == 'S' || c == 'M' || c == 'N') {
+                            break;
+                        }
+                    }
+                    cout << "[ERROR] Invalid input. Please enter S, M, or N.\n";
+                }
+                char patientType = toupper(patientTypeInput[0]);
 
                 generateBill(billRecords, patient, consult, doctorType, medicines, patientType);
                 break;
             }
             case 2: {
-                int billID;
-                cout << "Enter Bill ID: "; cin >> billID;
+                int billID = getPositiveInt("Enter Bill ID: ");
                 int idx = searchBillingRecord(billRecords, billID);
                 if (idx == -1) {
                     cout << "Bill not found!\n";
                 } else {
-                    double amount = getValidatedPayment();
-                    char method;
-                    cout << "Payment method (C=Cash, D=Debit): "; cin >> method;
+                    double amount = getValidatedPayment();  
+                    string methodInput = getNonEmptyString("Payment method (C=Cash, D=Debit): ");
+                    char method = toupper(methodInput[0]);
+                    if (method != 'C' && method != 'D') {
+                        cout << "[ERROR] Invalid payment method. Using Cash as default.\n";
+                        method = 'C';
+                    }
                     processPayment(billRecords[idx], amount, method);
                 }
                 break;
             }
             case 3: {
-                int billID;
-                cout << "Enter Bill ID: "; cin >> billID;
+                int billID = getPositiveInt("Enter Bill ID: ");
                 int idx = searchBillingRecord(billRecords, billID);
                 cout << (idx == -1 ? "Bill not found!\n" : "Bill found at record.\n");
                 break;
             }
             case 4: {
-                int billID;
-                cout << "Enter Bill ID: "; cin >> billID;
+                int billID = getPositiveInt("Enter Bill ID: ");
                 int idx = searchBillingRecord(billRecords, billID);
-                if (idx == -1) cout << "Bill not found!\n";
-                else printReceipt(billRecords[idx]);
+                if (idx == -1) {
+                    cout << "Bill not found!\n";
+                } else {
+                    printReceipt(billRecords[idx]);
+                }
                 break;
             }
             case 5: {
-                string date;
-                cout << "Enter date (DD/MM/YYYY): "; cin >> date;
+                string date = getNonEmptyString("Enter date (DD/MM/YYYY): ");
                 generateDailyReport(billRecords, date);
                 break;
             }
             case 6: {
-                int option;
-                cout << "1. Disease Statistics  2. Doctor Workload  3. Revenue Summary  4. Medicine Usage\n";
-                cout << "Choice: "; cin >> option;
+                int option = getValidatedMenuChoice(
+                    "1. Disease Statistics  2. Doctor Workload  3. Revenue Summary  4. Medicine Usage\nChoice: ",
+                    1, 4
+                );
                 generateStatisticsReport(billRecords, option);
                 break;
             }
