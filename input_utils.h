@@ -14,6 +14,17 @@
 #include <string>
 using namespace std;
 
+// Date validation functions
+bool isValidDate(const string& date);
+string getValidatedDate(const string& prompt);
+
+bool isValidFutureDate(const string& date);
+string getValidatedFutureDate(const string& prompt);
+
+bool isValidExpiryDate(const string& date);
+string getValidatedExpiryDate(const string& prompt);
+
+
 
 // Read an integer until the user enters a valid number (range can be specified)
 // Eg：int choice = readValidatedInt("Enter your choice: ", 1, 6);

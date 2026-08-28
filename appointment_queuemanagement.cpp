@@ -8,6 +8,7 @@
 #include <limits>
  
 #include "appointment_queuemanagement.h"
+#include "input_utils.h"  // For date validation
  
 using namespace std;
  
@@ -15,27 +16,13 @@ using namespace std;
 // CONSTANTS
 // ============================================================
  
-const int MAX_DOCTORS = 3;
+// MAX_DOCTORS is now from clinic_shared.h - remove duplicate
 const int MAX_SLOTS = 12;
  
-// How many years ahead of today a booking is allowed
-const int MAX_YEARS_AHEAD = 2;
- 
 // ============================================================
-// DOCTOR INFORMATION
+// DOCTOR INFORMATION - REMOVED DUPLICATE
+// Using global doctorIDs and doctorNames from clinic_shared.h
 // ============================================================
- 
-int doctorIDs[MAX_DOCTORS] =
-{
-    101, 102, 103
-};
- 
-string doctors[MAX_DOCTORS] =
-{
-    "Dr. Ahmad",
-    "Dr. Lim",
-    "Dr. Kumar"
-};
  
 // ============================================================
 // FIXED TIME SLOTS
@@ -60,13 +47,6 @@ string timeSlots[MAX_SLOTS] =
  
 // ============================================================
 // 2D ARRAY FOR DOCTOR AVAILABILITY
-//
-// true  = available
-// false = unavailable
-//
-// Row 0 = Dr. Ahmad
-// Row 1 = Dr. Lim
-// Row 2 = Dr. Kumar
 // ============================================================
  
 bool doctorAvailability[MAX_DOCTORS][MAX_SLOTS] =
@@ -99,8 +79,6 @@ bool patientExists(
     int patientID
 );
  
-bool isValidDate(string date);
- 
 bool isDoctorAvailable(
     int doctorIndex,
     int slotIndex
@@ -127,8 +105,6 @@ int getValidatedInt(
     int minValue,
     int maxValue
 );
- 
-string getValidatedDate(const string& prompt);
  
 int selectDoctor();
  
@@ -207,28 +183,20 @@ int getDoctorIndex(int doctorID)
  
 // ============================================================
 // PAUSE UNTIL THE USER PRESSES ENTER
-// Used after each action so results stay on screen until the
-// user chooses to go back, instead of jumping to the menu.
 // ============================================================
  
 void waitForEnter()
 {
     cout << "\nPress Enter to return to the menu...";
  
-    // Discard anything left over from the previous input
-    // (e.g. the newline after the last cin >> ...)
     cin.clear();
     cin.ignore(numeric_limits<streamsize>::max(), '\n');
- 
-    // Now actually wait for the user to press Enter
     cin.get();
 }
  
  
 // ============================================================
 // CHECK WHETHER A TIME SLOT HAS ALREADY PASSED
-// Only relevant when the appointment date is today; any
-// future date is never "in the past".
 // ============================================================
  
 bool isSlotInPast(
@@ -242,21 +210,17 @@ bool isSlotInPast(
     int todayMonth = localTime->tm_mon + 1;
     int todayDay   = localTime->tm_mday;
  
-    // Build today's date as DD/MM/YYYY (same format used
-    // everywhere else) so it can be compared directly.
     ostringstream oss;
  
     oss << setfill('0') << setw(2) << todayDay  << "/"
         << setfill('0') << setw(2) << todayMonth << "/"
         << todayYear;
  
-    // Not today -> can never be "in the past" here
     if (date != oss.str())
     {
         return false;
     }
  
-    // Parse "hh:mm AM/PM" into minutes since midnight
     int hour   = stoi(timeSlot.substr(0, 2));
     int minute = stoi(timeSlot.substr(3, 2));
     string period = timeSlot.substr(6, 2);
@@ -280,8 +244,6 @@ bool isSlotInPast(
  
 // ============================================================
 // GENERIC VALIDATED INTEGER INPUT
-// Reused by every menu / choice / ID prompt so validation
-// logic lives in exactly one place.
 // ============================================================
  
 int getValidatedInt(
@@ -310,124 +272,7 @@ int getValidatedInt(
  
  
 // ============================================================
-// DATE VALIDATION
-// Format: DD/MM/YYYY
-// Rejects malformed dates, impossible calendar dates,
-// dates in the past, and dates too far in the future.
-// ============================================================
- 
-bool isValidDate(string date)
-{
-    // Example: 25/08/2026 = 10 characters
-    if (date.length() != 10)
-    {
-        return false;
-    }
- 
-    // Check slash positions
-    if (date[2] != '/' || date[5] != '/')
-    {
-        return false;
-    }
- 
-    // Check all other characters are digits
-    for (int i = 0; i < (int)date.length(); i++)
-    {
-        if (i != 2 && i != 5)
-        {
-            if (!isdigit((unsigned char)date[i]))
-            {
-                return false;
-            }
-        }
-    }
- 
-    int day = stoi(date.substr(0, 2));
-    int month = stoi(date.substr(3, 2));
-    int year = stoi(date.substr(6, 4));
- 
-    if (month < 1 || month > 12)
-    {
-        return false;
-    }
- 
-    int daysInMonth[12] =
-    {
-        31, 28, 31, 30, 31, 30,
-        31, 31, 30, 31, 30, 31
-    };
- 
-    // Leap year
-    if ((year % 400 == 0) ||
-        (year % 4 == 0 && year % 100 != 0))
-    {
-        daysInMonth[1] = 29;
-    }
- 
-    if (day < 1 || day > daysInMonth[month - 1])
-    {
-        return false;
-    }
- 
-    // --------------------------------------------------------
-    // Compare against today's date (no more hardcoded years)
-    // --------------------------------------------------------
- 
-    time_t rawTime = time(nullptr);
-    tm* localTime = localtime(&rawTime);
- 
-    int todayYear  = localTime->tm_year + 1900;
-    int todayMonth = localTime->tm_mon + 1;
-    int todayDay   = localTime->tm_mday;
- 
-    // Reject dates before today
-    if (year < todayYear ||
-        (year == todayYear && month < todayMonth) ||
-        (year == todayYear && month == todayMonth && day < todayDay))
-    {
-        return false;
-    }
- 
-    // Reject dates too far in the future
-    if (year > todayYear + MAX_YEARS_AHEAD)
-    {
-        return false;
-    }
- 
-    return true;
-}
- 
- 
-// ============================================================
-// PROMPT + VALIDATE A DATE
-// Wraps isValidDate() in a retry loop so callers don't
-// repeat the same while-loop everywhere.
-// ============================================================
- 
-string getValidatedDate(const string& prompt)
-{
-    string date;
- 
-    cout << prompt;
-    cin >> date;
- 
-    while (!isValidDate(date))
-    {
-        cout << "Invalid date. Dates must be real, ";
-        cout << "not in the past, and within "
-             << MAX_YEARS_AHEAD << " years from today.\n";
-        cout << prompt;
- 
-        cin >> date;
-    }
- 
-    return date;
-}
- 
- 
-// ============================================================
 // PROMPT + VALIDATE A DOCTOR SELECTION
-// Returns the doctor's array INDEX (0-based).
 // ============================================================
  
 int selectDoctor()
@@ -437,7 +282,7 @@ int selectDoctor()
     for (int i = 0; i < MAX_DOCTORS; i++)
     {
         cout << i + 1 << ". "
-             << doctors[i]
+             << doctorNames[i]
              << " (ID: " << doctorIDs[i] << ")\n";
     }
  
@@ -487,9 +332,9 @@ bool checkSlotAvailability(
     for (int i = 0; i < (int)appointments.size(); i++)
     {
         if (appointments[i].doctorID == doctorID &&
-            appointments[i].appointmentDate == date &&   // Modified here
+            appointments[i].appointmentDate == date &&
             appointments[i].timeSlot == timeSlot &&
-            appointments[i].status != "Cancelled")       // Modified here
+            appointments[i].status != "Cancelled")
         {
             return false;
         }
@@ -501,14 +346,12 @@ bool checkSlotAvailability(
  
 // ============================================================
 // GENERATE NEXT APPOINTMENT ID
-// Uses the max ID present rather than assuming the vector
-// is always sorted / append-only.
 // ============================================================
  
 int generateNextAppointmentID(
     const vector<Appointment>& appointments)
 {
-    int maxID = 1000; // so the first ID issued is 1001
+    int maxID = 1000;
  
     for (int i = 0; i < (int)appointments.size(); i++)
     {
@@ -611,10 +454,6 @@ void bookAppointment(
     cout << "           BOOK APPOINTMENT\n";
     cout << "=========================================\n";
  
-    // --------------------------------------------------------
-    // Patient ID
-    // --------------------------------------------------------
- 
     newAppointment.patientID = getValidatedInt(
         "Enter Patient ID: ", 1, 999999999);
  
@@ -627,33 +466,19 @@ void bookAppointment(
         return;
     }
  
-    // --------------------------------------------------------
-    // Doctor
-    // --------------------------------------------------------
- 
     int doctorIndex = selectDoctor();
  
     newAppointment.doctorID =
         doctorIDs[doctorIndex];
  
-    // Set doctorType (required by clinic_shared.h)
-    // Default to "General" for now, can be customized later
     newAppointment.doctorType = "General";
  
-    // --------------------------------------------------------
-    // Date
-    // --------------------------------------------------------
- 
-    newAppointment.appointmentDate = getValidatedDate(   // Modified here
+    // FIXED: Use getValidatedFutureDate() - must be today or future
+    newAppointment.appointmentDate = getValidatedFutureDate(
         "\nEnter Appointment Date (DD/MM/YYYY): ");
  
-    // --------------------------------------------------------
-    // Show only this doctor's WORKING slots, renumbered 1..N
-    // so the list stays short and matches the select prompt
-    // --------------------------------------------------------
- 
     cout << "\nAvailable Time Slots for "
-         << doctors[doctorIndex] << ":\n\n";
+         << doctorNames[doctorIndex] << ":\n\n";
  
     cout << left
          << setw(5)  << "No."
@@ -663,9 +488,6 @@ void bookAppointment(
  
     cout << "-----------------------------\n";
  
-    // slotIndexMap remembers which REAL slot (0-11) each
-    // displayed number (1, 2, 3...) points back to.
-    // slotCount = how many working slots we found.
     int slotIndexMap[MAX_SLOTS];
     int slotCount = 0;
  
@@ -683,14 +505,14 @@ void bookAppointment(
              << setw(5)  << slotCount
              << setw(12) << timeSlots[i];
  
-        if (isSlotInPast(newAppointment.appointmentDate, timeSlots[i]))   // Modified here
+        if (isSlotInPast(newAppointment.appointmentDate, timeSlots[i]))
         {
             cout << "Passed";
         }
         else if (!checkSlotAvailability(
                      appointments,
                      newAppointment.doctorID,
-                     newAppointment.appointmentDate,   // Modified here
+                     newAppointment.appointmentDate,
                      timeSlots[i]))
         {
             cout << "Booked";
@@ -709,10 +531,6 @@ void bookAppointment(
         return;
     }
  
-    // --------------------------------------------------------
-    // Select Time
-    // --------------------------------------------------------
- 
     int slotChoice = getValidatedInt(
         "\nSelect Time Slot (1-" + to_string(slotCount) + "): ",
         1,
@@ -720,12 +538,8 @@ void bookAppointment(
  
     int slotIndex = slotIndexMap[slotChoice - 1];
  
-    // --------------------------------------------------------
-    // Check the slot hasn't already passed (today only)
-    // --------------------------------------------------------
- 
     if (isSlotInPast(
-            newAppointment.appointmentDate,   // Modified here
+            newAppointment.appointmentDate,
             timeSlots[slotIndex]))
     {
         cout << "\n";
@@ -739,14 +553,10 @@ void bookAppointment(
     newAppointment.timeSlot =
         timeSlots[slotIndex];
  
-    // --------------------------------------------------------
-    // Check double booking
-    // --------------------------------------------------------
- 
     if (!checkSlotAvailability(
             appointments,
             newAppointment.doctorID,
-            newAppointment.appointmentDate,   // Modified here
+            newAppointment.appointmentDate,
             newAppointment.timeSlot))
     {
         cout << "\n";
@@ -755,21 +565,12 @@ void bookAppointment(
         return;
     }
  
-    // --------------------------------------------------------
-    // Generate Appointment ID and Set Status
-    // --------------------------------------------------------
- 
     newAppointment.appointmentID =
         generateNextAppointmentID(appointments);
  
-    newAppointment.status = "Booked";   // Modified here
+    newAppointment.status = "Booked";
  
-    // Save appointment
     appointments.push_back(newAppointment);
- 
-    // --------------------------------------------------------
-    // Confirmation
-    // --------------------------------------------------------
  
     cout << "\n";
     cout << "=========================================\n";
@@ -786,11 +587,11 @@ void bookAppointment(
  
     cout << left
          << setw(20) << "Doctor:"
-         << doctors[doctorIndex] << endl;
+         << doctorNames[doctorIndex] << endl;
  
     cout << left
          << setw(20) << "Date:"
-         << newAppointment.appointmentDate << endl;   // Modified here
+         << newAppointment.appointmentDate << endl;
  
     cout << left
          << setw(20) << "Time:"
@@ -818,10 +619,11 @@ void displayDoctorSchedule(
  
     int doctorIndex = selectDoctor();
  
-    string date = getValidatedDate("Enter Date (DD/MM/YYYY): ");
+    // FIXED: Use getValidatedFutureDate() - must be today or future
+    string date = getValidatedFutureDate("Enter Date (DD/MM/YYYY): ");
  
     cout << "\n";
-    cout << "Doctor : " << doctors[doctorIndex] << endl;
+    cout << "Doctor : " << doctorNames[doctorIndex] << endl;
     cout << "Date   : " << date << endl;
  
     cout << "\n";
@@ -839,7 +641,6 @@ void displayDoctorSchedule(
              << setw(5)  << i + 1
              << setw(12) << timeSlots[i];
  
-        // Doctor doesn't work at this time
         if (!isDoctorAvailable(
                 doctorIndex,
                 i))
@@ -894,13 +695,13 @@ void cancelAppointment(
         if (appointments[i].appointmentID ==
             appointmentID)
         {
-            if (appointments[i].status == "Cancelled")   // Modified here
+            if (appointments[i].status == "Cancelled")
             {
                 cout << "This appointment is already cancelled.\n";
                 return;
             }
  
-            if (appointments[i].status == "Served")      // Modified here
+            if (appointments[i].status == "Served")
             {
                 cout << "This appointment has already been served ";
                 cout << "and cannot be cancelled.\n";
@@ -916,7 +717,7 @@ void cancelAppointment(
                  << appointments[i].doctorID << endl;
  
             cout << "Date       : "
-                 << appointments[i].appointmentDate << endl;   // Modified here
+                 << appointments[i].appointmentDate << endl;
  
             cout << "Time       : "
                  << appointments[i].timeSlot << endl;
@@ -929,7 +730,7 @@ void cancelAppointment(
  
             if (confirm == 1)
             {
-                appointments[i].status = "Cancelled";   // Modified here
+                appointments[i].status = "Cancelled";
  
                 cout << "\nAppointment cancelled successfully.\n";
             }
@@ -966,13 +767,13 @@ void rescheduleAppointment(
         if (appointments[i].appointmentID ==
             appointmentID)
         {
-            if (appointments[i].status == "Cancelled")   // Modified here
+            if (appointments[i].status == "Cancelled")
             {
                 cout << "This appointment has already been cancelled.\n";
                 return;
             }
  
-            if (appointments[i].status == "Served")      // Modified here
+            if (appointments[i].status == "Served")
             {
                 cout << "This appointment has already been served ";
                 cout << "and cannot be rescheduled.\n";
@@ -995,24 +796,17 @@ void rescheduleAppointment(
                  << appointments[i].patientID << endl;
  
             cout << "Doctor     : "
-                 << doctors[doctorIndex] << endl;
+                 << doctorNames[doctorIndex] << endl;
  
             cout << "Date       : "
-                 << appointments[i].appointmentDate << endl;   // Modified here
+                 << appointments[i].appointmentDate << endl;
  
             cout << "Time       : "
                  << appointments[i].timeSlot << endl;
  
-            // ------------------------------------------------
-            // New Date
-            // ------------------------------------------------
- 
-            string newDate = getValidatedDate(
+            // FIXED: Use getValidatedFutureDate() - must be today or future
+            string newDate = getValidatedFutureDate(
                 "\nEnter New Date (DD/MM/YYYY): ");
- 
-            // ------------------------------------------------
-            // Show only WORKING slots, renumbered 1..N
-            // ------------------------------------------------
  
             cout << "\nAvailable Time Slots:\n\n";
  
@@ -1024,8 +818,6 @@ void rescheduleAppointment(
  
             cout << "-----------------------------\n";
  
-            // slotIndexMap remembers which REAL slot (0-11)
-            // each displayed number points back to.
             int slotIndexMap[MAX_SLOTS];
             int slotCount = 0;
  
@@ -1055,8 +847,6 @@ void rescheduleAppointment(
                          k < (int)appointments.size();
                          k++)
                     {
-                        // Don't compare appointment
-                        // against itself
                         if (k == i)
                         {
                             continue;
@@ -1064,11 +854,11 @@ void rescheduleAppointment(
  
                         if (appointments[k].doctorID ==
                                 appointments[i].doctorID &&
-                            appointments[k].appointmentDate ==   // Modified here
+                            appointments[k].appointmentDate ==
                                 newDate &&
                             appointments[k].timeSlot ==
                                 timeSlots[j] &&
-                            appointments[k].status != "Cancelled")   // Modified here
+                            appointments[k].status != "Cancelled")
                         {
                             booked = true;
                             break;
@@ -1094,10 +884,6 @@ void rescheduleAppointment(
                 return;
             }
  
-            // ------------------------------------------------
-            // Select new slot
-            // ------------------------------------------------
- 
             int newSlot = getValidatedInt(
                 "\nSelect New Time Slot (1-" +
                     to_string(slotCount) + "): ",
@@ -1118,7 +904,6 @@ void rescheduleAppointment(
             string newTime =
                 timeSlots[newSlotIndex];
  
-            // Check double booking
             for (int j = 0;
                  j < (int)appointments.size();
                  j++)
@@ -1130,19 +915,18 @@ void rescheduleAppointment(
  
                 if (appointments[j].doctorID ==
                         appointments[i].doctorID &&
-                    appointments[j].appointmentDate ==   // Modified here
+                    appointments[j].appointmentDate ==
                         newDate &&
                     appointments[j].timeSlot ==
                         newTime &&
-                    appointments[j].status != "Cancelled")   // Modified here
+                    appointments[j].status != "Cancelled")
                 {
                     cout << "\nThe selected slot is already booked.\n";
                     return;
                 }
             }
  
-            // Update appointment
-            appointments[i].appointmentDate = newDate;   // Modified here
+            appointments[i].appointmentDate = newDate;
             appointments[i].timeSlot = newTime;
  
             cout << "\n";
@@ -1182,14 +966,15 @@ void manageQueue(
     cout << "          PATIENT QUEUE\n";
     cout << "=========================================\n";
  
-    string date = getValidatedDate("Enter Date (DD/MM/YYYY): ");
+    // FIXED: Use getValidatedFutureDate() - must be today or future
+    string date = getValidatedFutureDate("Enter Date (DD/MM/YYYY): ");
  
     int doctorIndex = selectDoctor();
     int doctorID = doctorIDs[doctorIndex];
  
     cout << "\n";
     cout << "Queue for "
-         << doctors[doctorIndex]
+         << doctorNames[doctorIndex]
          << " on " << date << endl;
  
     cout << "-------------------------------------------------------\n";
@@ -1205,7 +990,6 @@ void manageQueue(
  
     int queueNumber = 1;
  
-    // Go through time slots in chronological order
     for (int slot = 0; slot < MAX_SLOTS; slot++)
     {
         for (int i = 0;
@@ -1213,9 +997,9 @@ void manageQueue(
              i++)
         {
             if (appointments[i].doctorID == doctorID &&
-                appointments[i].appointmentDate == date &&   // Modified here
+                appointments[i].appointmentDate == date &&
                 appointments[i].timeSlot == timeSlots[slot] &&
-                appointments[i].status == "Booked")          // Modified here
+                appointments[i].status == "Booked")
             {
                 cout << left
                      << setw(10)
@@ -1256,12 +1040,12 @@ void getNextPatientInQueue(
     cout << "           CALL NEXT PATIENT\n";
     cout << "=========================================\n";
  
-    string date = getValidatedDate("Enter Date (DD/MM/YYYY): ");
+    // FIXED: Use getValidatedFutureDate() - must be today or future
+    string date = getValidatedFutureDate("Enter Date (DD/MM/YYYY): ");
  
     int doctorIndex = selectDoctor();
     int doctorID = doctorIDs[doctorIndex];
  
-    // Find earliest appointment
     for (int slot = 0;
          slot < MAX_SLOTS;
          slot++)
@@ -1271,11 +1055,11 @@ void getNextPatientInQueue(
              i++)
         {
             if (appointments[i].doctorID == doctorID &&
-                appointments[i].appointmentDate == date &&   // Modified here
+                appointments[i].appointmentDate == date &&
                 appointments[i].timeSlot == timeSlots[slot] &&
-                appointments[i].status == "Booked")          // Modified here
+                appointments[i].status == "Booked")
             {
-                appointments[i].status = "Served";   // Modified here
+                appointments[i].status = "Served";
  
                 cout << "\n";
                 cout << "=========================================\n";
@@ -1316,7 +1100,8 @@ void displayTodayAppointments(
     cout << "       TODAY'S APPOINTMENTS\n";
     cout << "=========================================\n";
  
-    string date = getValidatedDate("Enter Date (DD/MM/YYYY): ");
+    // FIXED: Use getValidatedFutureDate() - must be today or future
+    string date = getValidatedFutureDate("Enter Date (DD/MM/YYYY): ");
  
     cout << "\nAppointments on "
          << date << endl;
@@ -1339,7 +1124,7 @@ void displayTodayAppointments(
          i < (int)appointments.size();
          i++)
     {
-        if (appointments[i].appointmentDate == date)   // Modified here
+        if (appointments[i].appointmentDate == date)
         {
             found = true;
  
@@ -1348,7 +1133,7 @@ void displayTodayAppointments(
                     appointments[i].doctorID);
  
             string doctorName =
-                (doctorIndex != -1) ? doctors[doctorIndex] : "Unknown";
+                (doctorIndex != -1) ? doctorNames[doctorIndex] : "Unknown";
  
             cout << left
                  << setw(15)
@@ -1363,7 +1148,6 @@ void displayTodayAppointments(
                  << setw(15)
                  << appointments[i].timeSlot;
  
-            // Modified here: Use status string
             if (appointments[i].status == "Cancelled")
             {
                 cout << setw(12)

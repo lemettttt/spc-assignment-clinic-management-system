@@ -9,11 +9,28 @@ vector<Appointment>    appointments;
 vector<Consultation>   consultations;
 vector<Medicine>       medicines;
 vector<BillRecord>     billRecords;
+vector<Doctor>         doctors;
 
 int nextPatientID      = 1001;
 int nextAppointmentID  = 5001;
 int nextConsultationID = 7001;
 int nextMedicineID     = 3001;
+
+// Doctor arrays for backward compatibility with appointment module
+int doctorIDs[MAX_DOCTORS] = {101, 102, 103};
+string doctorNames[MAX_DOCTORS] = {"Dr. Ahmad", "Dr. Lim", "Dr. Kumar"};
+
+// ============================================================
+// Initialize doctor data
+// ============================================================
+void initDoctorData() {
+    // Only initialize if empty
+    if (doctors.empty()) {
+        doctors.push_back({101, "Dr. Ahmad", "General"});
+        doctors.push_back({102, "Dr. Lim", "Specialist"});
+        doctors.push_back({103, "Dr. Kumar", "General"});
+    }
+}
 
 // ============================================================
 // 保存员工数据到文件 staff.txt
@@ -66,6 +83,7 @@ void loadStaffData() {
 // seedSharedData() 目的：程序一启动就准备资料
 // ============================================================
 void seedSharedData() {
+    initDoctorData();
     // 先尝试从 staff.txt 加载已有账号
     loadStaffData();
 

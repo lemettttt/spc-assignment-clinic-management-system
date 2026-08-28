@@ -20,6 +20,7 @@ const int    MAX_LOGIN_ATTEMPTS    = 3;         // 登入最多允许失败几�
 const double GENERAL_CONSULT_FEE   = 45.00;     // 普通科诊金（来自Lemet）
 const double SPECIALIST_CONSULT_FEE = 80.00;    // 专科诊金（来自Lemet，取代原本的PEDIATRIC_CONSULT_FEE）
 const double SST_RATE              = 0.06;      // 服务税率6%（来自Lemet）
+const int MAX_DOCTORS = 3;
 
 // ============================================================
 // STRUCT 0：Staff
@@ -109,6 +110,12 @@ struct BillRecord {
     vector<MedicineItem> medicines;
 };
 
+struct Doctor {
+    int doctorID;
+    string name;
+    string specialization;
+};
+
 // ============================================================
 // Global Shared Data
 // ============================================================
@@ -118,6 +125,11 @@ extern vector<Appointment>    appointments;
 extern vector<Consultation>   consultations;
 extern vector<Medicine>       medicines;
 extern vector<BillRecord>     billRecords;
+extern vector<Doctor>         doctors;
+
+
+extern int doctorIDs[MAX_DOCTORS];
+extern string doctorNames[MAX_DOCTORS];
 
 extern int nextPatientID;
 extern int nextAppointmentID;
@@ -127,5 +139,6 @@ extern int nextMedicineID;
 void seedSharedData();
 void saveStaffData();
 void loadStaffData();
+void initDoctorData();
 
 #endif

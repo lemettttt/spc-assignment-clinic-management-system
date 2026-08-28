@@ -2,7 +2,15 @@
 #define CONSULTATION_MEDICINE_H
 
 #include "clinic_shared.h"
+#include <vector>
+#include <string>
 using namespace std;
+
+int findPatientIndex(const vector<Patient>& patients, int patientID);
+int findMedicineIndex(const vector<Medicine>& medicineInventory, int medicineID);
+int findConsultationIndex(const vector<Consultation>& consultations, int consultationID);
+int findDoctorIndex(const vector<Doctor>& doctors, int doctorID);  
+void displayDoctorList(const vector<Doctor>& doctors);            
 
 // Main menu
 void consultationMedicineMenu(

@@ -356,3 +356,213 @@ void pressZeroToContinue() {
         }
     }
 }
+
+// ============================================================
+// 1. BASIC DATE VALIDATION - Format only (DD/MM/YYYY)
+//    Allows ANY valid date (past, present, or future)
+//    Used for: Consultation dates, medical history, general records
+// ============================================================
+
+bool isValidDate(const string& date)
+{
+    // Check length: DD/MM/YYYY = 10 characters
+    if (date.length() != 10)
+    {
+        return false;
+    }
+
+    // Check slash positions
+    if (date[2] != '/' || date[5] != '/')
+    {
+        return false;
+    }
+
+    // Check all other characters are digits
+    for (int i = 0; i < (int)date.length(); i++)
+    {
+        if (i != 2 && i != 5)
+        {
+            if (!isdigit((unsigned char)date[i]))
+            {
+                return false;
+            }
+        }
+    }
+
+    int day = stoi(date.substr(0, 2));
+    int month = stoi(date.substr(3, 2));
+    int year = stoi(date.substr(6, 4));
+
+    if (month < 1 || month > 12)
+    {
+        return false;
+    }
+
+    int daysInMonth[12] =
+    {
+        31, 28, 31, 30, 31, 30,
+        31, 31, 30, 31, 30, 31
+    };
+
+    // Leap year
+    if ((year % 400 == 0) ||
+        (year % 4 == 0 && year % 100 != 0))
+    {
+        daysInMonth[1] = 29;
+    }
+
+    if (day < 1 || day > daysInMonth[month - 1])
+    {
+        return false;
+    }
+
+    // Allow reasonable range (2010-2030)
+    if (year < 2010 || year > 2030)
+    {
+        return false;
+    }
+
+    return true;
+}
+
+// ============================================================
+// PROMPT + VALIDATE A DATE (Format only)
+//    Allows ANY valid date (past, present, or future)
+//    Used for: Consultation dates, medical history
+// ============================================================
+
+string getValidatedDate(const string& prompt)
+{
+    string date;
+
+    cout << prompt;
+    getline(cin, date);
+
+    while (!isValidDate(date))
+    {
+        cout << "Invalid date format. Please use DD/MM/YYYY (e.g., 25/12/2026).\n";
+        cout << prompt;
+        getline(cin, date);
+    }
+
+    return date;
+}
+
+// ============================================================
+// 2. FUTURE DATE VALIDATION - Must be today or future
+//    Does NOT allow past dates
+//    Used for: Appointments, bookings, scheduling
+// ============================================================
+
+bool isValidFutureDate(const string& date)
+{
+    // First check basic format
+    if (!isValidDate(date))
+    {
+        return false;
+    }
+
+    // Parse the date
+    int day = stoi(date.substr(0, 2));
+    int month = stoi(date.substr(3, 2));
+    int year = stoi(date.substr(6, 4));
+
+    // Get today's date
+    time_t rawTime = time(nullptr);
+    tm* localTime = localtime(&rawTime);
+
+    int todayYear  = localTime->tm_year + 1900;
+    int todayMonth = localTime->tm_mon + 1;
+    int todayDay   = localTime->tm_mday;
+
+    // Date must be today or in the future
+    if (year < todayYear ||
+        (year == todayYear && month < todayMonth) ||
+        (year == todayYear && month == todayMonth && day < todayDay))
+    {
+        return false;
+    }
+
+    return true;
+}
+
+// ============================================================
+// PROMPT + VALIDATE FUTURE DATE (Today or future)
+//    Used for: Appointments, bookings
+// ============================================================
+
+string getValidatedFutureDate(const string& prompt)
+{
+    string date;
+
+    cout << prompt;
+    getline(cin, date);
+
+    while (!isValidFutureDate(date))
+    {
+        cout << "Invalid date. Please enter today's date or a future date in DD/MM/YYYY format.\n";
+        cout << prompt;
+        getline(cin, date);
+    }
+
+    return date;
+}
+
+// ============================================================
+// 3. EXPIRY DATE VALIDATION - Must be in the future (after today)
+//    Used for: Medicine expiry dates
+// ============================================================
+
+bool isValidExpiryDate(const string& date)
+{
+    // First check basic format
+    if (!isValidDate(date))
+    {
+        return false;
+    }
+
+    // Parse the date
+    int day = stoi(date.substr(0, 2));
+    int month = stoi(date.substr(3, 2));
+    int year = stoi(date.substr(6, 4));
+
+    // Get today's date
+    time_t rawTime = time(nullptr);
+    tm* localTime = localtime(&rawTime);
+
+    int todayYear  = localTime->tm_year + 1900;
+    int todayMonth = localTime->tm_mon + 1;
+    int todayDay   = localTime->tm_mday;
+
+    // Expiry date must be strictly in the future (cannot be today)
+    if (year < todayYear ||
+        (year == todayYear && month < todayMonth) ||
+        (year == todayYear && month == todayMonth && day <= todayDay))
+    {
+        return false;
+    }
+
+    return true;
+}
+
+// ============================================================
+// PROMPT + VALIDATE EXPIRY DATE (Must be after today)
+//    Used for: Medicines
+// ============================================================
+
+string getValidatedExpiryDate(const string& prompt)
+{
+    string date;
+
+    cout << prompt;
+    getline(cin, date);
+
+    while (!isValidExpiryDate(date))
+    {
+        cout << "Invalid expiry date. Please enter a future date in DD/MM/YYYY format (must be after today).\n";
+        cout << prompt;
+        getline(cin, date);
+    }
+
+    return date;
+}
