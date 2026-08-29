@@ -21,12 +21,6 @@
 
 using namespace std;
 
-// ---------------- CONSTANTS ----------------
-// 这些常量已在 clinic_shared.h 中定义，此处删除
-// const double GENERAL_CONSULT_FEE    = 45.00;
-// const double SPECIALIST_CONSULT_FEE = 80.00;
-// const double SST_RATE               = 0.06;
-
 // ---------------- FUNCTION PROTOTYPES ----------------
 double calculateConsultationFee(string doctorType);
 double calculateMedicineFee(vector<MedicineItem> medicines);
@@ -34,7 +28,6 @@ void   addBillingRecord(vector<BillRecord>& billRecords, BillRecord newBill);
 void   generateBill(vector<BillRecord>& billRecords, Patient patient, Consultation consult,
                      string doctorType, vector<MedicineItem> medicines, char patientType);
 int    searchBillingRecord(vector<BillRecord> billRecords, int billID);
-double getValidatedPayment();
 bool   processPayment(BillRecord& bill, double amountReceived, char paymentMethod);
 void   printReceipt(BillRecord bill);
 void   generateDailyReport(vector<BillRecord> billRecords, string date);
@@ -130,21 +123,6 @@ int findMedicineIndex(vector<Medicine> medicineInventory, int medicineID) {
         if (medicineInventory[i].medicineID == medicineID) return i;
     }
     return -1;
-}
-
-double getValidatedPayment() {
-    double amount;
-    while (true) {
-        cout << "Enter payment amount (RM): ";
-        cin >> amount;
-        if (cin.fail() || amount < 0) {
-            cin.clear();
-            cin.ignore(1000, '\n');
-            cout << "Invalid input. Please enter a positive number.\n";
-        } else {
-            return amount;
-        }
-    }
 }
 
 bool processPayment(BillRecord& bill, double amountReceived, char paymentMethod) {
@@ -328,7 +306,17 @@ void billingReportMenu(vector<BillRecord>& billRecords, vector<Patient>& patient
                 }
                 Consultation consult = consultations[cIdx];
 
-                string doctorType = getNonEmptyString("Doctor Type (General/Specialist): ");
+                string doctorType;
+                while (true) {
+                    doctorType = getNonEmptyString("Doctor Type (G=General, S=Specialist): ");
+                    if (doctorType.length() == 1) {
+                        char c = toupper(doctorType[0]);
+                        if (c == 'S' || c == 'M' || c == 'N') {
+                            break;
+                        }
+                    }
+                    cout << "[ERROR] Invalid input. Please enter S, M, or N.\n";
+                }
 
                 vector<MedicineItem> medicines;
                 int medCount = getNonNegativeInt("Number of medicine items prescribed: ");
@@ -370,13 +358,19 @@ void billingReportMenu(vector<BillRecord>& billRecords, vector<Patient>& patient
                 if (idx == -1) {
                     cout << "Bill not found!\n";
                 } else {
-                    double amount = getValidatedPayment();  
-                    string methodInput = getNonEmptyString("Payment method (C=Cash, D=Debit): ");
-                    char method = toupper(methodInput[0]);
-                    if (method != 'C' && method != 'D') {
-                        cout << "[ERROR] Invalid payment method. Using Cash as default.\n";
-                        method = 'C';
+                    double amount = getNonNegativeDouble("Enter payment amount (RM): ");
+
+                    string methodInput;
+                    while (true) {
+                        methodInput = getNonEmptyString("Payment method (C=Cash, D=Debit): ");
+                        if (methodInput.length() == 1) {
+                            char c = toupper(methodInput[0]);
+                            if (c == 'C' || c == 'D') break;
+                        }
+                        cout << "[ERROR] Invalid input. Please enter C or D.\n";
                     }
+                    char method = toupper(methodInput[0]);
+
                     processPayment(billRecords[idx], amount, method);
                 }
                 break;
@@ -398,13 +392,13 @@ void billingReportMenu(vector<BillRecord>& billRecords, vector<Patient>& patient
                 break;
             }
             case 5: {
-                string date = getNonEmptyString("Enter date (DD/MM/YYYY): ");
+                string date = getValidatedDate("Enter date (DD/MM/YYYY): ");
                 generateDailyReport(billRecords, date);
                 break;
             }
             case 6: {
                 int option = getValidatedMenuChoice(
-                    "1. Disease Statistics  2. Doctor Workload  3. Revenue Summary  4. Medicine Usage\nChoice: ",
+                    "1. Disease Statistics\n2. Doctor Workload\n3. Revenue Summary\n4. Medicine Usage\nChoice: ",
                     1, 4
                 );
                 generateStatisticsReport(billRecords, option);
