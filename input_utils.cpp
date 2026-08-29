@@ -2,6 +2,7 @@
 #include <cctype>
 #include <sstream>
 #include <limits>
+#include <ctime>
 #include "input_utils.h"
 using namespace std;
 
@@ -49,6 +50,11 @@ char readValidatedGender() {
     do {
         cout << "\nEnter Gender (M/F): ";
         getline(cin, input);
+
+        if (input.empty()) {
+            cout << "[ERROR] Input cannot be empty. Please enter M or F.\n";
+            continue;
+        }
 
         if (input.length() == 1) {
             gender = toupper(input[0]);
@@ -195,19 +201,26 @@ string readAlphaOnly(const string& prompt) {
 // Read any integer from the user (no range validation)
 // Returns the integer value entered by the user
 int getValidatedInt(const string& prompt) {
+    string line;
     int value;
 
     while (true) {
         cout << prompt;
-
-        if (cin >> value) {
-            cin.ignore(numeric_limits<streamsize>::max(), '\n');
+        getline(cin, line);
+        
+        // Check for empty input
+        if (line.empty()) {
+            cout << "[ERROR] Input cannot be empty. Please enter a valid number.\n";
+            continue;
+        }
+        
+        stringstream ss(line);
+        
+        if ((ss >> value) && ss.eof()) {
             return value;
         }
 
-        cin.clear();
-        cin.ignore(numeric_limits<streamsize>::max(), '\n');
-        cout << "Invalid input. Please enter a valid number.\n";
+        cout << "[ERROR] Invalid input. Please enter a valid number.\n";
     }
 }
 
@@ -215,15 +228,15 @@ int getValidatedInt(const string& prompt) {
 // Prompts repeatedly until the user enters a valid positive number
 int getPositiveInt(const string& prompt) {
     int value;
-
+    
     while (true) {
         value = getValidatedInt(prompt);
-
+        
         if (value > 0) {
             return value;
         }
-
-        cout << "Invalid input. Please enter a number greater than 0.\n";
+        
+        cout << "[ERROR] Please enter a number greater than 0.\n";
     }
 }
 
@@ -231,34 +244,41 @@ int getPositiveInt(const string& prompt) {
 // Prompts repeatedly until the user enters a valid non-negative number
 int getNonNegativeInt(const string& prompt) {
     int value;
-
+    
     while (true) {
         value = getValidatedInt(prompt);
-
+        
         if (value >= 0) {
             return value;
         }
-
-        cout << "Invalid input. Please enter 0 or a positive number.\n";
+        
+        cout << "[ERROR] Please enter 0 or a positive number.\n";
     }
 }
 
 // Read any double value from the user
 // Returns the double value entered by the user
 double getValidatedDouble(const string& prompt) {
+    string line;
     double value;
 
     while (true) {
         cout << prompt;
-
-        if (cin >> value) {
-            cin.ignore(numeric_limits<streamsize>::max(), '\n');
+        getline(cin, line);
+        
+        // Check for empty input
+        if (line.empty()) {
+            cout << "[ERROR] Input cannot be empty. Please enter a valid number.\n";
+            continue;
+        }
+        
+        stringstream ss(line);
+        
+        if ((ss >> value) && ss.eof()) {
             return value;
         }
 
-        cin.clear();
-        cin.ignore(numeric_limits<streamsize>::max(), '\n');
-        cout << "Invalid input. Please enter a valid number.\n";
+        cout << "[ERROR] Invalid input. Please enter a valid number.\n";
     }
 }
 
@@ -266,15 +286,15 @@ double getValidatedDouble(const string& prompt) {
 // Prompts repeatedly until the user enters a valid non-negative number
 double getNonNegativeDouble(const string& prompt) {
     double value;
-
+    
     while (true) {
         value = getValidatedDouble(prompt);
-
+        
         if (value >= 0) {
             return value;
         }
-
-        cout << "Invalid input. Value cannot be negative.\n";
+        
+        cout << "[ERROR] Value cannot be negative.\n";
     }
 }
 
@@ -291,27 +311,39 @@ string getNonEmptyString(const string& prompt) {
             return value;
         }
 
-        cout << "Invalid input. This field cannot be empty.\n";
+        cout << "[ERROR] Invalid input. This field cannot be empty.\n";
     }
 }
 
 // Read a Yes/No response from the user
 // Accepts 'Y', 'y', 'N', 'n' and returns the uppercase character
 char getYesNo(const string& prompt) {
+    string input;
     char answer;
 
     while (true) {
         cout << prompt;
-        cin >> answer;
-        cin.ignore(numeric_limits<streamsize>::max(), '\n');
-
-        answer = toupper(static_cast<unsigned char>(answer));
+        getline(cin, input);
+        
+        // Check for empty input
+        if (input.empty()) {
+            cout << "[ERROR] Input cannot be empty. Please enter Y or N.\n";
+            continue;
+        }
+        
+        // Check if input is exactly one character
+        if (input.length() != 1) {
+            cout << "[ERROR] Please enter only Y or N.\n";
+            continue;
+        }
+        
+        answer = toupper(static_cast<unsigned char>(input[0]));
 
         if (answer == 'Y' || answer == 'N') {
             return answer;
         }
 
-        cout << "Invalid input. Please enter Y or N.\n";
+        cout << "[ERROR] Invalid input. Please enter Y or N.\n";
     }
 }
 
@@ -319,15 +351,15 @@ char getYesNo(const string& prompt) {
 // Prompts until the user enters a valid option between minOption and maxOption
 int getValidatedMenuChoice(const string& prompt, int minOption, int maxOption) {
     int choice;
-
+    
     while (true) {
         choice = getValidatedInt(prompt);
-
+        
         if (choice >= minOption && choice <= maxOption) {
             return choice;
         }
-
-        cout << "Invalid choice. Please enter a number between "
+        
+        cout << "[ERROR] Please enter a number between "
              << minOption << " and " << maxOption << ".\n";
     }
 }
@@ -335,24 +367,28 @@ int getValidatedMenuChoice(const string& prompt, int minOption, int maxOption) {
 // Pause execution and wait for the user to press 0 to continue
 // Used after displaying results so the user can read before the menu reappears
 void pressZeroToContinue() {
+    string line;
     int choice;
 
     while (true) {
         cout << "\nPress 0 to continue: ";
-
-        if (cin >> choice) {
-            cin.ignore(numeric_limits<streamsize>::max(), '\n');
-
+        getline(cin, line);
+        
+        // Check for empty input
+        if (line.empty()) {
+            cout << "[ERROR] Input cannot be empty. Please enter 0.\n";
+            continue;
+        }
+        
+        stringstream ss(line);
+        
+        if ((ss >> choice) && ss.eof()) {
             if (choice == 0) {
                 break;
             }
-
-            cout << "Invalid input. Please enter 0.\n";
-        }
-        else {
-            cin.clear();
-            cin.ignore(numeric_limits<streamsize>::max(), '\n');
-            cout << "Invalid input. Please enter 0.\n";
+            cout << "[ERROR] Invalid input. Please enter 0.\n";
+        } else {
+            cout << "[ERROR] Invalid input. Please enter a valid number.\n";
         }
     }
 }
@@ -431,21 +467,25 @@ bool isValidDate(const string& date)
 //    Used for: Consultation dates, medical history
 // ============================================================
 
-string getValidatedDate(const string& prompt)
-{
+string getValidatedDate(const string& prompt) {
     string date;
-
-    cout << prompt;
-    getline(cin, date);
-
-    while (!isValidDate(date))
-    {
-        cout << "Invalid date format. Please use DD/MM/YYYY (e.g., 25/12/2026).\n";
+    
+    while (true) {
         cout << prompt;
         getline(cin, date);
+        
+        if (date.empty()) {
+            cout << "[ERROR] Input cannot be empty. Please enter a date in DD/MM/YYYY format.\n";
+            continue;
+        }
+        
+        if (!isValidDate(date)) {
+            cout << "[ERROR] Invalid date format. Please use DD/MM/YYYY (e.g., 25/12/2026).\n";
+            continue;
+        }
+        
+        return date;
     }
-
-    return date;
 }
 
 // ============================================================
@@ -495,17 +535,22 @@ string getValidatedFutureDate(const string& prompt)
 {
     string date;
 
-    cout << prompt;
-    getline(cin, date);
-
-    while (!isValidFutureDate(date))
-    {
-        cout << "Invalid date. Please enter today's date or a future date in DD/MM/YYYY format.\n";
+    while (true) {
         cout << prompt;
         getline(cin, date);
+        
+        if (date.empty()) {
+            cout << "[ERROR] Input cannot be empty. Please enter today's date or a future date in DD/MM/YYYY format.\n";
+            continue;
+        }
+        
+        if (!isValidFutureDate(date)) {
+            cout << "[ERROR] Invalid date. Please enter today's date or a future date in DD/MM/YYYY format.\n";
+            continue;
+        }
+        
+        return date;
     }
-
-    return date;
 }
 
 // ============================================================
@@ -549,20 +594,23 @@ bool isValidExpiryDate(const string& date)
 // PROMPT + VALIDATE EXPIRY DATE (Must be after today)
 //    Used for: Medicines
 // ============================================================
-
-string getValidatedExpiryDate(const string& prompt)
-{
+string getValidatedExpiryDate(const string& prompt) {
     string date;
-
-    cout << prompt;
-    getline(cin, date);
-
-    while (!isValidExpiryDate(date))
-    {
-        cout << "Invalid expiry date. Please enter a future date in DD/MM/YYYY format (must be after today).\n";
+    
+    while (true) {
         cout << prompt;
         getline(cin, date);
+        
+        if (date.empty()) {
+            cout << "[ERROR] Input cannot be empty. Please enter a future date in DD/MM/YYYY format.\n";
+            continue;
+        }
+        
+        if (!isValidExpiryDate(date)) {
+            cout << "[ERROR] Invalid expiry date. Please enter a future date in DD/MM/YYYY format (must be after today).\n";
+            continue;
+        }
+        
+        return date;
     }
-
-    return date;
 }

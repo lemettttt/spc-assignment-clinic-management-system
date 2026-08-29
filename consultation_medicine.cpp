@@ -49,7 +49,7 @@ void displayDoctorList(const vector<Doctor>& doctors) {
              << setw(15) << doc.specialization
              << endl;
     }
-    cout << "========================================\n";
+    cout << "========================================\n\n";
 }
 
 // ============================================================
@@ -122,72 +122,127 @@ void recordConsultation(
     newConsultation.consultationID = nextConsultationID++;
     cout << "Auto-generated Consultation ID: " << newConsultation.consultationID << endl;
 
-    newConsultation.patientID = getPositiveInt("Enter Patient ID: ");
-
-    int patientIndex = findPatientIndex(
-        patients,
-        newConsultation.patientID
-    );
-
-    // Validate Patient ID
-    if (patientIndex == -1) {
-        cout << "Error: Patient ID does not exist.\n";
-        pressZeroToContinue();
-        // Rollback the consultation ID if registration fails
-        nextConsultationID--;
-        return;
+    // Get and validate Patient ID with retry option
+    while (true) {
+        int patientID = getNonNegativeInt("Enter Patient ID (or 0 to cancel): ");
+        
+        if (patientID == 0) {
+            cout << "Operation cancelled.\n";
+            nextConsultationID--;
+            return;
+        }
+        
+        int patientIndex = findPatientIndex(patients, patientID);
+        if (patientIndex == -1) {
+            cout << "Error: Patient ID does not exist. Please try again or enter 0 to cancel.\n";
+            continue;
+        }
+        
+        newConsultation.patientID = patientID;
+        cout << "Patient Name: " << patients[patientIndex].name << endl;
+        break;
     }
 
-    cout << "Patient Name: " << patients[patientIndex].name << endl;
-
-    // Display available doctors
-    displayDoctorList(doctors);
-
-    // Get and validate Doctor ID
-    newConsultation.doctorID = getPositiveInt("Enter Doctor ID: ");
-    
-    int doctorIndex = findDoctorIndex(doctors, newConsultation.doctorID);
-    if (doctorIndex == -1) {
-        cout << "Error: Doctor ID does not exist. Please enter a valid Doctor ID from the list.\n";
-        pressZeroToContinue();
-        nextConsultationID--;  // Rollback
-        return;
+    // Get and validate Doctor ID with retry option
+    while (true) {
+        displayDoctorList(doctors);
+        
+        int doctorID = getNonNegativeInt("Enter Doctor ID (or 0 to cancel): ");
+        
+        if (doctorID == 0) {
+            cout << "Operation cancelled.\n";
+            nextConsultationID--;
+            return;
+        }
+        
+        int doctorIndex = findDoctorIndex(doctors, doctorID);
+        if (doctorIndex == -1) {
+            cout << "Error: Doctor ID does not exist. Please try again or enter 0 to cancel.\n";
+            continue;
+        }
+        
+        newConsultation.doctorID = doctorID;
+        newConsultation.doctorType = doctors[doctorIndex].specialization;
+        cout << "Doctor: " << doctors[doctorIndex].name << " (" << doctors[doctorIndex].specialization << ")\n";
+        break;
     }
-
-    // Set doctorType based on selected doctor's specialization
-    newConsultation.doctorType = doctors[doctorIndex].specialization;
 
     newConsultation.diagnosis = getNonEmptyString("Enter Diagnosis: ");
 
     // Use validated date from input_utils.h - allows past, present, or future
     newConsultation.consultationDate = getValidatedDate("Enter Consultation Date (DD/MM/YYYY): ");
 
-    // Follow-up date input - can be past, present, or future
+    // Follow-up date input with proper validation
     string followUpInput;
     do {
         cout << "Enter Follow-up Date (DD/MM/YYYY) or 'None' if not required: ";
         getline(cin, followUpInput);
-        if (!followUpInput.empty()) {
+        
+        if (followUpInput.empty()) {
+            cout << "[ERROR] Input cannot be empty. Please enter a value or 'None'.\n";
+            continue;
+        }
+        
+        // Check if user wants no follow-up
+        if (followUpInput == "None" || followUpInput == "none" || followUpInput == "NONE") {
+            followUpInput = "None";
             break;
         }
-        cout << "Input cannot be empty. Please enter a value.\n";
+        
+        // Validate date format
+        if (!isValidDate(followUpInput)) {
+            cout << "[ERROR] Invalid date format. Please use DD/MM/YYYY (e.g., 25/12/2026) or 'None'.\n";
+            continue;
+        }
+        // Parse consultation date for comparison
+        int consultDay = stoi(newConsultation.consultationDate.substr(0, 2));
+        int consultMonth = stoi(newConsultation.consultationDate.substr(3, 2));
+        int consultYear = stoi(newConsultation.consultationDate.substr(6, 4));
+        
+        // Parse follow-up date for comparison
+        int followDay = stoi(followUpInput.substr(0, 2));
+        int followMonth = stoi(followUpInput.substr(3, 2));
+        int followYear = stoi(followUpInput.substr(6, 4));
+        
+        // Check if follow-up date is after consultation date
+        if (followYear < consultYear ||
+            (followYear == consultYear && followMonth < consultMonth) ||
+            (followYear == consultYear && followMonth == consultMonth && followDay <= consultDay)) {
+            cout << "[ERROR] Follow-up date must be after the consultation date (" 
+                 << newConsultation.consultationDate << "). Please enter a later date.\n";
+            continue;
+        }
+        break;
     } while (true);
     
-    // Validate follow-up date if not "None"
-    if (followUpInput != "None" && followUpInput != "none") {
-        while (!isValidDate(followUpInput)) {
-            cout << "Invalid date format. Please use DD/MM/YYYY (e.g., 25/12/2026) or 'None'.\n";
-            cout << "Enter Follow-up Date (DD/MM/YYYY) or 'None' if not required: ";
-            getline(cin, followUpInput);
-        }
-    }
     newConsultation.followUpDate = followUpInput;
 
     consultations.push_back(newConsultation);
 
-    cout << "\nConsultation recorded successfully.\n";
+    cout << "\n==========================================\n";
+    cout << "Consultation recorded successfully.\n";
     cout << "Consultation ID: " << newConsultation.consultationID << endl;
-    cout << "Doctor: " << doctors[doctorIndex].name << " (" << doctors[doctorIndex].specialization << ")\n";
+    cout << "Patient ID: " << newConsultation.patientID << endl;
+    
+    // Display patient name
+    int patientIdx = findPatientIndex(patients, newConsultation.patientID);
+    if (patientIdx != -1) {
+        cout << "Patient Name: " << patients[patientIdx].name << endl;
+    }
+    
+    cout << "Doctor ID: " << newConsultation.doctorID << endl;
+    
+    // Display doctor name
+    int doctorIdx = findDoctorIndex(doctors, newConsultation.doctorID);
+    if (doctorIdx != -1) {
+        cout << "Doctor Name: " << doctors[doctorIdx].name << endl;
+    }
+    
+    cout << "Diagnosis: " << newConsultation.diagnosis << endl;
+    cout << "Date: " << newConsultation.consultationDate << endl;
+    cout << "Follow-up: " << newConsultation.followUpDate << endl;
+    cout << "==========================================\n";
+    
     pressZeroToContinue();
 }
 
@@ -201,20 +256,31 @@ void viewMedicalHistory(
     const vector<Patient>& patients
 ) {
     cout << "\n========== VIEW MEDICAL HISTORY ==========\n";
-
-    int patientID = getPositiveInt("Enter Patient ID: ");
-
-    int patientIndex = findPatientIndex(
-        patients,
-        patientID
-    );
-
-    if (patientIndex == -1) {
-        cout << "Error: Patient ID does not exist.\n";
-        pressZeroToContinue();
-        return;
+    
+    int patientID;
+    int patientIndex;
+    
+    // Keep asking until valid patient ID is entered or user cancels
+    while (true) {
+        patientID = getNonNegativeInt("Enter Patient ID (or 0 to cancel): ");
+        
+        if (patientID == 0) {
+            cout << "Operation cancelled.\n";
+            return;
+        }
+        
+        patientIndex = findPatientIndex(patients, patientID);
+        
+        if (patientIndex == -1) {
+            cout << "Error: Patient ID does not exist. Please try again or enter 0 to cancel.\n";
+            continue;
+        }
+        
+        // Valid patient found, break out of loop
+        break;
     }
 
+    // Display patient information
     cout << "\nPatient ID: " << patients[patientIndex].patientID << endl;
     cout << "Patient Name: " << patients[patientIndex].name << endl;
     cout << "Allergy History: " << patients[patientIndex].allergyHistory << endl;
@@ -234,9 +300,19 @@ void viewMedicalHistory(
             string doctorName = (doctorIdx != -1) ? doctors[doctorIdx].name : "Unknown Doctor";
 
             cout << "\nConsultation ID: " << consultation.consultationID << endl;
-            cout << "Doctor: " << doctorName << " (ID: " << consultation.doctorID << ")" << endl;
-            cout << "Diagnosis: " << consultation.diagnosis << endl;
+            cout << "Doctor: " << doctorName << endl;
             cout << "Date: " << consultation.consultationDate << endl;
+            cout << "Diagnosis: " << consultation.diagnosis << endl;
+            
+            // Display prescribed medicines
+            if (!consultation.prescribedMedicines.empty()) {
+                cout << "Medicines Prescribed:\n";
+                for (const PrescribedMedicine& pm : consultation.prescribedMedicines) {
+                    cout << "- " << pm.medicineName << " x " << pm.quantity << endl;
+                }
+            } else {
+                cout << "Medicines Prescribed: None\n";
+            }
 
             if (consultation.followUpDate != "None" && !consultation.followUpDate.empty()) {
                 cout << "Follow-up Date: " << consultation.followUpDate << endl;
@@ -294,12 +370,18 @@ bool checkStockAvailability(
 // ============================================================
 
 void prescribeMedicine(
-    vector<Medicine>& medicineInventory
+    vector<Consultation>& consultations,
+    vector<Medicine>& medicineInventory,
+    const vector<Patient>& patients,
+    const vector<Doctor>& doctors
 ) {
-    int medicineID;
-    int quantity;
-
     cout << "\n========== PRESCRIBE MEDICINE ==========\n";
+
+    if (consultations.empty()) {
+        cout << "No consultation records available.\n";
+        pressZeroToContinue();
+        return;
+    }
 
     if (medicineInventory.empty()) {
         cout << "No medicine records available for prescription.\n";
@@ -307,33 +389,116 @@ void prescribeMedicine(
         return;
     }
 
-    displayMedicineList(medicineInventory);
-
-    medicineID = getPositiveInt("\nEnter Medicine ID: ");
-    quantity = getPositiveInt("Enter Quantity: ");
-
-    if (!checkStockAvailability(
-            medicineInventory,
-            medicineID,
-            quantity
-        )) {
-
-        cout << "Medicine prescription failed.\n";
-        pressZeroToContinue();
-        return;
+    // Get and validate Consultation ID
+    int consultationID;
+    int consultationIndex;
+    while (true) {
+        consultationID = getNonNegativeInt("Enter Consultation ID (or 0 to cancel): ");
+        
+        if (consultationID == 0) {
+            cout << "Operation cancelled.\n";
+            return;
+        }
+        
+        consultationIndex = findConsultationIndex(consultations, consultationID);
+        if (consultationIndex == -1) {
+            cout << "Error: Consultation ID does not exist. Please try again or enter 0 to cancel.\n";
+            continue;
+        }
+        break;
     }
 
-    int index = findMedicineIndex(
-        medicineInventory,
-        medicineID
-    );
+    Consultation& consultation = consultations[consultationIndex];
+    
+    // Display consultation details
+    int patientIdx = findPatientIndex(patients, consultation.patientID);
+    cout << "\nPatient: " << (patientIdx != -1 ? patients[patientIdx].name : "Unknown") << endl;
+    
+    int doctorIdx = findDoctorIndex(doctors, consultation.doctorID);
+    cout << "Doctor: " << (doctorIdx != -1 ? doctors[doctorIdx].name : "Unknown") << endl;
+    cout << "Diagnosis: " << consultation.diagnosis << endl;
 
-    medicineInventory[index].quantity -= quantity;
+    // Display medicine list
+    displayMedicineList(medicineInventory);
 
-    cout << "\nMedicine prescribed successfully.\n";
-    cout << "Medicine: " << medicineInventory[index].medicineName << endl;
-    cout << "Quantity Prescribed: " << quantity << endl;
-    cout << "Remaining Stock: " << medicineInventory[index].quantity << endl;
+    // Prescribe medicines (allow multiple)
+    while (true) {
+        cout << "\n--- Add Medicine ---\n" << endl;
+        
+        // Get and validate Medicine ID with retry option
+        int medicineID;
+        int medicineIndex;
+        while (true) {
+            medicineID = getNonNegativeInt("Enter Medicine ID (or 0 to finish): ");
+            
+            if (medicineID == 0) {
+                if (consultation.prescribedMedicines.empty()) {
+                    cout << "No medicines prescribed. Operation cancelled.\n";
+                    return;
+                }
+                // Break out of medicine selection
+                break;
+            }
+            
+            medicineIndex = findMedicineIndex(medicineInventory, medicineID);
+            if (medicineIndex == -1) {
+                cout << "Error: Medicine ID does not exist. Please try again or enter 0 to finish.\n";
+                continue;
+            }
+            break;
+        }
+        
+        if (medicineID == 0) {
+            break; // User finished adding medicines
+        }
+
+        // Get quantity with validation - retry if stock not enough
+        int quantity;
+        while (true) {
+            quantity = getNonNegativeInt("Enter Quantity (or 0 to cancel): ");
+            
+            if (quantity == 0) {
+                cout << "Operation cancelled.\n";
+                return;
+            }
+            
+            // Check stock availability
+            if (medicineInventory[medicineIndex].quantity < quantity) {
+                cout << "Insufficient stock.\n";
+                cout << "Available quantity: " << medicineInventory[medicineIndex].quantity << endl;
+                cout << "Requested quantity: " << quantity << endl;
+                cout << "Please enter a smaller quantity or 0 to cancel.\n";
+                continue;
+            }
+            break;
+        }
+
+        // Deduct stock
+        medicineInventory[medicineIndex].quantity -= quantity;
+
+        // Add prescribed medicine to consultation
+        PrescribedMedicine prescribed;
+        prescribed.medicineID = medicineID;
+        prescribed.medicineName = medicineInventory[medicineIndex].medicineName;
+        prescribed.quantity = quantity;
+        consultation.prescribedMedicines.push_back(prescribed);
+
+        cout << "\nMedicine prescribed successfully.\n";
+        cout << "Medicine: " << medicineInventory[medicineIndex].medicineName << endl;
+        cout << "Quantity: " << quantity << endl;
+        cout << "Remaining Stock: " << medicineInventory[medicineIndex].quantity << endl;
+        
+        // Ask if user wants to prescribe more
+        char more = getYesNo("\nPrescribe another medicine? (Y/N): ");
+        if (more != 'Y' && more != 'y') {
+            break;
+        }
+    }
+
+    cout << "\n==========================================\n";
+    cout << "Prescription completed.\n";
+    cout << "Total medicines prescribed: " << consultation.prescribedMedicines.size() << endl;
+    cout << "==========================================\n";
 
     pressZeroToContinue();
 }
@@ -351,7 +516,7 @@ void displayMedicineList(
         return;
     }
 
-    cout << "\n================ MEDICINE LIST ================\n";
+    cout << "\n========================== MEDICINE LIST ==========================\n";
 
     cout << left
          << setw(10) << "ID"
@@ -383,30 +548,53 @@ void displayMedicineList(
 void updateMedicineStock(
     vector<Medicine>& medicineInventory
 ) {
-    int medicineID;
-    int quantity;
-
     cout << "\n========== UPDATE MEDICINE STOCK ==========\n";
 
-    medicineID = getPositiveInt("Enter Medicine ID: ");
+    // Get and validate Medicine ID with retry option
+    int medicineID;
+    while (true) {
+        medicineID = getNonNegativeInt("Enter Medicine ID (or 0 to cancel): ");
+        
+        if (medicineID == 0) {
+            cout << "Operation cancelled.\n";
+            return;
+        }
+        
+        int index = findMedicineIndex(medicineInventory, medicineID);
+        if (index == -1) {
+            cout << "Medicine not found. Please try again or enter 0 to cancel.\n";
+            continue;
+        }
+        break;
+    }
 
-    int index = findMedicineIndex(
-        medicineInventory,
-        medicineID
-    );
-
+    int index = findMedicineIndex(medicineInventory, medicineID);
     if (index == -1) {
         cout << "Medicine not found.\n";
         pressZeroToContinue();
         return;
     }
 
-    quantity = getPositiveInt("Enter quantity to add: ");
+    int quantity;
+    while (true) {
+        quantity = getNonNegativeInt("Enter quantity to add (or 0 to cancel): ");
+        
+        if (quantity == 0) {
+            cout << "Operation cancelled.\n";
+            return;
+        }
+        break;
+    }
 
     medicineInventory[index].quantity += quantity;
 
-    cout << "\nMedicine stock updated successfully.\n";
+    cout << "\n==========================================\n";
+    cout << "Medicine stock updated successfully.\n";
+    cout << "Medicine ID: " << medicineInventory[index].medicineID << endl;
+    cout << "Medicine Name: " << medicineInventory[index].medicineName << endl;
     cout << "New Stock Quantity: " << medicineInventory[index].quantity << endl;
+    cout << "==========================================\n";
+    
     pressZeroToContinue();
 }
 
@@ -440,14 +628,20 @@ void addNewMedicine(
 
     newMedicine.price = getNonNegativeDouble("Enter Medicine Price: RM ");
 
-    // FIXED: Use expiry date validation - must be in the future
+    // Use expiry date validation - must be in the future
     newMedicine.expiryDate = getValidatedExpiryDate("Enter Expiry Date (DD/MM/YYYY): ");
 
     medicineInventory.push_back(newMedicine);
 
-    cout << "\nNew medicine added successfully.\n";
+    cout << "\n==========================================\n";
+    cout << "New medicine added successfully.\n";
     cout << "Medicine ID: " << newMedicine.medicineID << endl;
+    cout << "Medicine Name: " << newMedicine.medicineName << endl;
+    cout << "Stock Quantity: " << newMedicine.quantity << endl;
+    cout << "Price: RM " << fixed << setprecision(2) << newMedicine.price << endl;
     cout << "Expiry Date: " << newMedicine.expiryDate << endl;
+    cout << "==========================================\n";
+    
     pressZeroToContinue();
 }
 
@@ -459,17 +653,27 @@ void addNewMedicine(
 void searchMedicine(
     const vector<Medicine>& medicineInventory
 ) {
-    int medicineID;
-
     cout << "\n========== SEARCH MEDICINE ==========\n";
 
-    medicineID = getPositiveInt("Enter Medicine ID: ");
+    // Get and validate Medicine ID with retry option
+    int medicineID;
+    while (true) {
+        medicineID = getNonNegativeInt("Enter Medicine ID (or 0 to cancel): ");
+        
+        if (medicineID == 0) {
+            cout << "Operation cancelled.\n";
+            return;
+        }
+        
+        int index = findMedicineIndex(medicineInventory, medicineID);
+        if (index == -1) {
+            cout << "Medicine not found. Please try again or enter 0 to cancel.\n";
+            continue;
+        }
+        break;
+    }
 
-    int index = findMedicineIndex(
-        medicineInventory,
-        medicineID
-    );
-
+    int index = findMedicineIndex(medicineInventory, medicineID);
     if (index == -1) {
         cout << "Medicine not found.\n";
         pressZeroToContinue();
@@ -478,12 +682,14 @@ void searchMedicine(
 
     const Medicine& medicine = medicineInventory[index];
 
-    cout << "\nMedicine Found\n";
+    cout << "\n==========================================\n";
+    cout << "Medicine Found\n";
     cout << "Medicine ID: " << medicine.medicineID << endl;
     cout << "Medicine Name: " << medicine.medicineName << endl;
     cout << "Stock Quantity: " << medicine.quantity << endl;
     cout << "Price: RM " << fixed << setprecision(2) << medicine.price << endl;
     cout << "Expiry Date: " << medicine.expiryDate << endl;
+    cout << "==========================================\n";
 
     pressZeroToContinue();
 }
@@ -496,18 +702,27 @@ void searchMedicine(
 void deleteMedicine(
     vector<Medicine>& medicineInventory
 ) {
-    int medicineID;
-    char confirm;
-
     cout << "\n========== DELETE MEDICINE ==========\n";
 
-    medicineID = getPositiveInt("Enter Medicine ID: ");
+    // Get and validate Medicine ID with retry option
+    int medicineID;
+    while (true) {
+        medicineID = getNonNegativeInt("Enter Medicine ID (or 0 to cancel): ");
+        
+        if (medicineID == 0) {
+            cout << "Operation cancelled.\n";
+            return;
+        }
+        
+        int index = findMedicineIndex(medicineInventory, medicineID);
+        if (index == -1) {
+            cout << "Medicine not found. Please try again or enter 0 to cancel.\n";
+            continue;
+        }
+        break;
+    }
 
-    int index = findMedicineIndex(
-        medicineInventory,
-        medicineID
-    );
-
+    int index = findMedicineIndex(medicineInventory, medicineID);
     if (index == -1) {
         cout << "Medicine not found.\n";
         pressZeroToContinue();
@@ -516,7 +731,7 @@ void deleteMedicine(
 
     cout << "Medicine: " << medicineInventory[index].medicineName << endl;
 
-    confirm = getYesNo("Are you sure you want to delete this medicine? (Y/N): ");
+    char confirm = getYesNo("Are you sure you want to delete this medicine? (Y/N): ");
 
     if (confirm == 'Y' || confirm == 'y') {
 
@@ -572,7 +787,7 @@ void displayLowStockWarning(
 void checkExpiryDate(
     const vector<Medicine>& medicineInventory
 ) {
-    cout << "\n========== MEDICINE EXPIRY CHECK ==========\n";
+    cout << "\n=============== MEDICINE EXPIRY CHECK ===============\n";
 
     if (medicineInventory.empty()) {
         cout << "No medicine records found.\n";
@@ -633,7 +848,7 @@ void displayFollowUpReminder(
     const vector<Consultation>& consultations,
     const vector<Patient>& patients
 ) {
-    cout << "\n========== FOLLOW-UP REMINDERS ==========\n";
+    cout << "\n==================== FOLLOW-UP REMINDERS ====================\n";
 
     bool found = false;
 
@@ -648,54 +863,55 @@ void displayFollowUpReminder(
          << setw(12) << "Patient ID"
          << setw(20) << "Patient Name"
          << setw(20) << "Doctor"
-         << setw(15) << "Follow-up Date"
+         << setw(17) << "Follow-up Date"
          << setw(12) << "Status"
          << endl;
     cout << string(77, '-') << endl;
 
     for (const Consultation& consultation : consultations) {
-
-        if (consultation.followUpDate != "None" && !consultation.followUpDate.empty()) {
-
-            int patientIndex = findPatientIndex(
-                patients,
-                consultation.patientID
-            );
-            
-            int doctorIdx = findDoctorIndex(doctors, consultation.doctorID);
-
-            found = true;
-
-            string patientName = (patientIndex != -1) ? patients[patientIndex].name : "Unknown";
-            string doctorName = (doctorIdx != -1) ? doctors[doctorIdx].name : "Unknown";
-
-            // Check if follow-up date is overdue
-            bool isOverdue = false;
-            if (isValidDate(consultation.followUpDate)) {
-                int day = stoi(consultation.followUpDate.substr(0, 2));
-                int month = stoi(consultation.followUpDate.substr(3, 2));
-                int year = stoi(consultation.followUpDate.substr(6, 4));
-
-                if (year < todayYear ||
-                    (year == todayYear && month < todayMonth) ||
-                    (year == todayYear && month == todayMonth && day < todayDay)) {
-                    isOverdue = true;
-                }
-            }
-
-            cout << left
-                 << setw(12) << consultation.patientID
-                 << setw(20) << patientName
-                 << setw(20) << doctorName
-                 << setw(15) << consultation.followUpDate;
-
-            if (isOverdue) {
-                cout << "OVERDUE!";
-            } else {
-                cout << "Pending";
-            }
-            cout << endl;
+        // Skip if follow-up is "None" or empty
+        if (consultation.followUpDate == "None" || consultation.followUpDate.empty()) {
+            continue;
         }
+
+        int patientIndex = findPatientIndex(
+            patients,
+            consultation.patientID
+        );
+        
+        int doctorIdx = findDoctorIndex(doctors, consultation.doctorID);
+
+        found = true;
+
+        string patientName = (patientIndex != -1) ? patients[patientIndex].name : "Unknown";
+        string doctorName = (doctorIdx != -1) ? doctors[doctorIdx].name : "Unknown";
+
+        // Check if follow-up date is overdue
+        bool isOverdue = false;
+        if (isValidDate(consultation.followUpDate)) {
+            int day = stoi(consultation.followUpDate.substr(0, 2));
+            int month = stoi(consultation.followUpDate.substr(3, 2));
+            int year = stoi(consultation.followUpDate.substr(6, 4));
+
+            if (year < todayYear ||
+                (year == todayYear && month < todayMonth) ||
+                (year == todayYear && month == todayMonth && day < todayDay)) {
+                isOverdue = true;
+            }
+        }
+
+        cout << left
+             << setw(12) << consultation.patientID
+             << setw(20) << patientName
+             << setw(20) << doctorName
+             << setw(17) << consultation.followUpDate;
+
+        if (isOverdue) {
+            cout << "OVERDUE!";
+        } else {
+            cout << "Pending";
+        }
+        cout << endl;
     }
 
     if (!found) {
@@ -712,7 +928,8 @@ void displayFollowUpReminder(
 void consultationMedicineMenu(
     vector<Consultation>& consultations,
     vector<Medicine>& medicineInventory,
-    vector<Patient>& patients
+    vector<Patient>& patients,
+    const vector<Doctor>& doctors
 ) {
     int choice;
 
@@ -753,7 +970,7 @@ void consultationMedicineMenu(
                 break;
 
             case 3:
-                prescribeMedicine(medicineInventory);
+                prescribeMedicine(consultations, medicineInventory, patients, doctors);
                 break;
 
             case 4:

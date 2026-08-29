@@ -58,20 +58,30 @@ struct Appointment {
 };
 
 // ============================================================
-// STRUCT 3：Consultation
+// STRUCT 3: PrescribedMedicine (Must be defined before Consultation)
+// ============================================================
+struct PrescribedMedicine {
+    int medicineID;
+    string medicineName;
+    int quantity;
+};
+
+// ============================================================
+// STRUCT 4：Consultation
 // ============================================================
 struct Consultation {
     int consultationID;
     int patientID;
     int doctorID;
-    string doctorType;      // 跟Appointment/Bill保持一致
+    string doctorType;
     string diagnosis;
     string consultationDate;
     string followUpDate;
+    vector<PrescribedMedicine> prescribedMedicines;  // List of prescribed medicines
 };
 
 // ============================================================
-// STRUCT 4：Medicine —— Consultation模块负责人维护
+// STRUCT 5：Medicine —— Consultation模块负责人维护
 // ------------------------------------------------------------
 struct Medicine {
     int medicineID;
@@ -82,7 +92,7 @@ struct Medicine {
 };
 
 // ============================================================
-// STRUCT 5：MedicineItem 
+// STRUCT 6：MedicineItem 
 // ------------------------------------------------------------
 struct MedicineItem {
     string name;
@@ -91,7 +101,7 @@ struct MedicineItem {
 };
 
 // ============================================================
-// STRUCT 6：BillRecord —— Billing模块负责人维护
+// STRUCT 7：BillRecord —— Billing模块负责人维护
 // ------------------------------------------------------------
 struct BillRecord {
     int billID;

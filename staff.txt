@@ -1,3 +1,4 @@
 admin,1234,Admin
 reception1,pass123,Receptionist
 lemet,123456,student
+peien,070513,Nurse

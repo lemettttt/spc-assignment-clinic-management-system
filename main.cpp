@@ -53,7 +53,7 @@ int main() {
                 break;
                 
             case 3: 
-                consultationMedicineMenu(consultations, medicines, patients);   // Consultation module
+                consultationMedicineMenu(consultations, medicines, patients, doctors);
                 break;
                 
             case 4: 

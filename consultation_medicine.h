@@ -1,25 +1,23 @@
 #ifndef CONSULTATION_MEDICINE_H
 #define CONSULTATION_MEDICINE_H
 
-#include "clinic_shared.h"
 #include <vector>
 #include <string>
+#include "clinic_shared.h"
+
 using namespace std;
 
-int findPatientIndex(const vector<Patient>& patients, int patientID);
-int findMedicineIndex(const vector<Medicine>& medicineInventory, int medicineID);
-int findConsultationIndex(const vector<Consultation>& consultations, int consultationID);
-int findDoctorIndex(const vector<Doctor>& doctors, int doctorID);  
-void displayDoctorList(const vector<Doctor>& doctors);            
+// NOTE: PrescribedMedicine and Consultation structs are defined in clinic_shared.h
+// DO NOT redefine them here!
 
-// Main menu
+// Function prototypes
 void consultationMedicineMenu(
     vector<Consultation>& consultations,
     vector<Medicine>& medicineInventory,
-    vector<Patient>& patients
+    vector<Patient>& patients,
+    const vector<Doctor>& doctors
 );
 
-// Consultation functions
 void recordConsultation(
     vector<Consultation>& consultations,
     const vector<Patient>& patients
@@ -30,15 +28,11 @@ void viewMedicalHistory(
     const vector<Patient>& patients
 );
 
-// Medicine functions
 void prescribeMedicine(
-    vector<Medicine>& medicineInventory
-);
-
-bool checkStockAvailability(
-    const vector<Medicine>& medicineInventory,
-    int medicineID,
-    int quantity
+    vector<Consultation>& consultations,
+    vector<Medicine>& medicineInventory,
+    const vector<Patient>& patients,
+    const vector<Doctor>& doctors
 );
 
 void displayMedicineList(
@@ -61,7 +55,11 @@ void deleteMedicine(
     vector<Medicine>& medicineInventory
 );
 
-// Extra functions
+void displayLowStockWarning(
+    const vector<Medicine>& medicineInventory,
+    int threshold
+);
+
 void checkExpiryDate(
     const vector<Medicine>& medicineInventory
 );
@@ -71,9 +69,33 @@ void displayFollowUpReminder(
     const vector<Patient>& patients
 );
 
-void displayLowStockWarning(
+// Helper functions
+int findDoctorIndex(
+    const vector<Doctor>& doctors,
+    int doctorID
+);
+
+int findPatientIndex(
+    const vector<Patient>& patients,
+    int patientID
+);
+
+int findMedicineIndex(
     const vector<Medicine>& medicineInventory,
-    int threshold
+    int medicineID
+);
+
+int findConsultationIndex(
+    const vector<Consultation>& consultations,
+    int consultationID
+);
+
+void displayDoctorList(const vector<Doctor>& doctors);
+
+bool checkStockAvailability(
+    const vector<Medicine>& medicineInventory,
+    int medicineID,
+    int quantity
 );
 
 #endif
