@@ -100,12 +100,6 @@ bool isSlotInPast(
     const string& timeSlot
 );
  
-int getValidatedInt(
-    const string& prompt,
-    int minValue,
-    int maxValue
-);
- 
 int selectDoctor();
  
 int generateNextAppointmentID(
@@ -241,36 +235,6 @@ bool isSlotInPast(
     return slotMinutes <= nowMinutes;
 }
  
- 
-// ============================================================
-// GENERIC VALIDATED INTEGER INPUT
-// ============================================================
- 
-int getValidatedInt(
-    const string& prompt,
-    int minValue,
-    int maxValue)
-{
-    int value;
- 
-    cout << prompt;
- 
-    while (!(cin >> value) ||
-           value < minValue ||
-           value > maxValue)
-    {
-        cin.clear();
-        cin.ignore(1000, '\n');
- 
-        cout << "Invalid input.\n";
-        cout << "Please enter a number from "
-             << minValue << " to " << maxValue << ": ";
-    }
- 
-    return value;
-}
- 
- 
 // ============================================================
 // PROMPT + VALIDATE A DOCTOR SELECTION
 // ============================================================
@@ -286,7 +250,7 @@ int selectDoctor()
              << " (ID: " << doctorIDs[i] << ")\n";
     }
  
-    int choice = getValidatedInt(
+    int choice = getValidatedMenuChoice(
         "Select Doctor (1-" + to_string(MAX_DOCTORS) + "): ",
         1,
         MAX_DOCTORS);
@@ -391,7 +355,7 @@ void appointmentQueueMenu(
         cout << "0. Back to Main Menu\n";
         cout << "=========================================\n";
  
-        choice = getValidatedInt("Enter choice: ", 0, 7);
+        choice = getValidatedMenuChoice("Enter choice: ", 0, 7);
  
         switch (choice)
         {
@@ -454,7 +418,7 @@ void bookAppointment(
     cout << "           BOOK APPOINTMENT\n";
     cout << "=========================================\n";
  
-    newAppointment.patientID = getValidatedInt(
+    newAppointment.patientID = getValidatedMenuChoice(
         "Enter Patient ID: ", 1, 999999999);
  
     if (!patientExists(
@@ -531,7 +495,7 @@ void bookAppointment(
         return;
     }
  
-    int slotChoice = getValidatedInt(
+    int slotChoice = getValidatedMenuChoice(
         "\nSelect Time Slot (1-" + to_string(slotCount) + "): ",
         1,
         slotCount);
@@ -687,7 +651,7 @@ void cancelAppointment(
     cout << "          CANCEL APPOINTMENT\n";
     cout << "=========================================\n";
  
-    int appointmentID = getValidatedInt(
+    int appointmentID = getValidatedMenuChoice(
         "Enter Appointment ID: ", 1, 999999999);
  
     for (int i = 0; i < (int)appointments.size(); i++)
@@ -726,7 +690,7 @@ void cancelAppointment(
             cout << "1. Yes\n";
             cout << "2. No\n";
  
-            int confirm = getValidatedInt("Enter choice: ", 1, 2);
+            int confirm = getValidatedMenuChoice("Enter choice: ", 1, 2);
  
             if (confirm == 1)
             {
@@ -759,7 +723,7 @@ void rescheduleAppointment(
     cout << "         RESCHEDULE APPOINTMENT\n";
     cout << "=========================================\n";
  
-    int appointmentID = getValidatedInt(
+    int appointmentID = getValidatedMenuChoice(
         "Enter Appointment ID: ", 1, 999999999);
  
     for (int i = 0; i < (int)appointments.size(); i++)
@@ -884,7 +848,7 @@ void rescheduleAppointment(
                 return;
             }
  
-            int newSlot = getValidatedInt(
+            int newSlot = getValidatedMenuChoice(
                 "\nSelect New Time Slot (1-" +
                     to_string(slotCount) + "): ",
                 1,
