@@ -645,7 +645,7 @@ void displayFollowUpReminder(
     int todayDay = localTime->tm_mday;
 
     cout << left
-         << setw(10) << "Patient ID"
+         << setw(12) << "Patient ID"
          << setw(20) << "Patient Name"
          << setw(20) << "Doctor"
          << setw(15) << "Follow-up Date"
@@ -684,7 +684,7 @@ void displayFollowUpReminder(
             }
 
             cout << left
-                 << setw(10) << consultation.patientID
+                 << setw(12) << consultation.patientID
                  << setw(20) << patientName
                  << setw(20) << doctorName
                  << setw(15) << consultation.followUpDate;
