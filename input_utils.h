@@ -87,4 +87,6 @@ int getValidatedMenuChoice(const string& prompt, int minOption, int maxOption);
 // Used after displaying results so the user can read before the menu reappears
 void pressZeroToContinue();                            
 
+void clearScreen();
+
 #endif

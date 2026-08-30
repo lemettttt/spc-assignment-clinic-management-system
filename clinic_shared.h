@@ -21,6 +21,16 @@ const double GENERAL_CONSULT_FEE   = 45.00;     // 普通科诊金（来自Lemet
 const double SPECIALIST_CONSULT_FEE = 80.00;    // 专科诊金（来自Lemet，取代原本的PEDIATRIC_CONSULT_FEE）
 const double SST_RATE              = 0.06;      // 服务税率6%（来自Lemet）
 const int MAX_DOCTORS = 3;
+// 颜色常量
+const int COLOR_RESET        = 7;    // 白色（默认）
+const int COLOR_DARK_BLUE    = 1;    // 深蓝
+const int COLOR_BRIGHT_BLUE  = 9;    // 亮蓝
+const int COLOR_CYAN         = 3;    // 青色
+const int COLOR_LIGHT_BLUE   = 11;   // 淡蓝
+const int COLOR_RED          = 12;   // 亮红
+
+// 设置控制台颜色的函数
+void setColor(int color);
 
 // ============================================================
 // STRUCT 0：Staff
@@ -107,7 +117,7 @@ struct BillRecord {
     int billID;
     int patientID;
     int doctorID;
-    string doctorType;       // "General" or "Specialist"
+    int consultationID;      // links this bill to the exact consultation it was billed for
     string serviceDate;
     double consultationFee;
     double medicineFee;
@@ -147,8 +157,6 @@ extern int nextConsultationID;
 extern int nextMedicineID;
 
 void seedSharedData();
-void saveStaffData();
-void loadStaffData();
 void initDoctorData();
 
 #endif

@@ -1,4 +1,3 @@
- 
 #include <iostream>
 #include <cstdlib>
 #include "login_module.h"
@@ -9,17 +8,14 @@ using namespace std;
 // STEP 1：validatePasswordLength() 
 // ============================================================
 bool validatePasswordLength(const string& password) {
-	return (int)password.length() >= MIN_PASSWORD_LENGTH;   // 6 characters minimum
+    return (int)password.length() >= MIN_PASSWORD_LENGTH;
 }
 
 // ============================================================
 // STEP 2：checkDuplicateUsername()
 // ============================================================
 bool checkDuplicateUsername(const string& username) {
-	// Check if the username already exists in the staffList
     for (int i = 0; i < (int)staffList.size(); i++) {
-
-		// Check if the username matches any existing staff member's username
         if (staffList[i].username == username) {
             return true;
         }
@@ -31,10 +27,7 @@ bool checkDuplicateUsername(const string& username) {
 // STEP 3：findStaffIndex()
 // ============================================================
 int findStaffIndex(const string& username) {
-	// Search for the index of the staff member with the given username in the staffList
     for (int i = 0; i < (int)staffList.size(); i++) {
-
-		// Check if the username matches any existing staff member's username
         if (staffList[i].username == username) {
             return i;
         }
@@ -44,11 +37,9 @@ int findStaffIndex(const string& username) {
 
 // ============================================================
 // STEP 4：login()
-// for loop(linear search)整个staffList，username & password 都对上才回传true
 // ============================================================
 bool login(const vector<Staff>& staffList, const string& username, const string& password) {
     for (int i = 0; i < (int)staffList.size(); i++) {
-
         if (staffList[i].username == username && staffList[i].password == password) {
             return true;
         }
@@ -57,10 +48,10 @@ bool login(const vector<Staff>& staffList, const string& username, const string&
 }
 
 // ============================================================
-// STEP 5：registerUser()
+// STEP 5：registerUser() — 移除了 role 字段
 // ============================================================
 void registerUser() {
-    string username, password, role;
+    string username, password;
 
     cout << "\n----- REGISTER NEW STAFF ACCOUNT -----\n";
     cout << "(Enter 0 to go back)\n";
@@ -93,16 +84,13 @@ void registerUser() {
         break;
     }
 
-    role = readAlphaOnly("Enter role (e.g. Nurse / Doctor / Pharmacist ): ");
-
-    staffList.push_back({ username, password, role });
-    saveStaffData();
+    // 不再询问 role，直接存入空字符串
+    staffList.push_back({ username, password, "" });
     cout << "\n[System] Account registered successfully! You can now log in.\n";
 }
 
 // ============================================================
 // STEP 6：loginUser()
-// nested if —— 先判断username存不存在，存在的话再判断password对不对
 // ============================================================
 bool loginUser() {
     string username, password;
@@ -117,14 +105,13 @@ bool loginUser() {
         return false;
     }
 
-
     password = readNonEmptyLine("Enter password: ");
 
     int idx = findStaffIndex(username);
     if (idx != -1) {
         if (staffList[idx].password == password) {
-            cout << "\n[System] Login successful! Welcome, " << username
-                << " (" << staffList[idx].role << ").\n";
+            // 不再显示 role
+            cout << "\n[System] Login successful! Welcome, " << username << ".\n";
             return true;
         }
         else {
@@ -139,24 +126,40 @@ bool loginUser() {
 }
 
 // ============================================================
-// STEP 7：authenticationGate() —— used in main.cpp
-// ------------------------------------------------------------
+// STEP 7：authenticationGate()
+// ============================================================
 void authenticationGate() {
     int choice;
     bool loggedIn = false;
 
-	// Use a do-while loop to keep prompting the user until they successfully log in or choose to exit
     do {
-        cout << "\n===== TARUMT CLINIC - STAFF LOGIN =====\n";
-        cout << "1. Login\n";
-        cout << "2. Register New Account\n";
-        cout << "3. Exit System\n";
-        cout << "=========================================\n";
-        choice = readValidatedInt("Enter your choice: ", 1, 3);
+        
+        setColor(COLOR_DARK_BLUE);
+        cout << "\n  ============================================================\n";
+        cout << "  |              TARUMT CLINIC - STAFF LOGIN                 |\n";
+        cout << "  +----------------------------------------------------------+\n";
+        cout << "  |                                                          |\n";
+        
+        setColor(COLOR_LIGHT_BLUE);
+        cout << "  |   1.  Login                                              |\n";
+        cout << "  |   2.  Register New Account                               |\n";
+        
+        setColor(COLOR_DARK_BLUE);
+        cout << "  |                                                          |\n";
+        
+        setColor(COLOR_RED);
+        cout << "  |   3.  Exit System                                        |\n";
+        
+        setColor(COLOR_DARK_BLUE);
+        cout << "  |                                                          |\n";
+        cout << "  ============================================================\n";
+        setColor(COLOR_RESET);
+        
+        choice = readValidatedInt("  Enter your choice: ", 1, 3);
 
         switch (choice) {
         case 1:
-			loggedIn = loginUser();     // If login is successful, loggedIn will be true and the loop will exit
+            loggedIn = loginUser();
             break;
         case 2:
             registerUser();
@@ -167,5 +170,5 @@ void authenticationGate() {
         default:
             cout << "[ERROR] Invalid choice. Please enter 1-3.\n";
         }
-	} while (!loggedIn);    // Keep looping until the user successfully logs in
+    } while (!loggedIn);
 }

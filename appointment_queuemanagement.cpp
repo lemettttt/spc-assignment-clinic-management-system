@@ -495,76 +495,54 @@ int generateNextAppointmentID(
 // APPOINTMENT & QUEUE MAIN MENU
 // ============================================================
  
-void appointmentQueueMenu(
-    vector<Appointment>& appointments,
-    vector<Patient>& patients)
-{
+void appointmentQueueMenu(vector<Appointment>& appointments, vector<Patient>& patients) {
     int choice;
- 
-    do
-    {
-        cout << "\n";
-        cout << "=========================================\n";
-        cout << "   APPOINTMENT & QUEUE MANAGEMENT\n";
-        cout << "=========================================\n";
-        cout << "1. Book Appointment\n";
-        cout << "2. Display Doctor Schedule\n";
-        cout << "3. Cancel Appointment\n";
-        cout << "4. Reschedule Appointment\n";
-        cout << "5. Manage Patient Queue\n";
-        cout << "6. Call Next Patient\n";
-        cout << "7. Display Today's Appointments\n";
-        cout << "0. Back to Main Menu\n";
-        cout << "=========================================\n";
- 
-        choice = getValidatedInt("Enter choice: ", 0, 7);
- 
-        switch (choice)
-        {
-        case 1:
-            bookAppointment(appointments, patients);
-            waitForEnter();
-            break;
- 
-        case 2:
-            displayDoctorSchedule(appointments);
-            waitForEnter();
-            break;
- 
-        case 3:
-            cancelAppointment(appointments);
-            waitForEnter();
-            break;
- 
-        case 4:
-            rescheduleAppointment(appointments);
-            waitForEnter();
-            break;
- 
-        case 5:
-            manageQueue(appointments, patients);
-            waitForEnter();
-            break;
- 
-        case 6:
-            getNextPatientInQueue(appointments);
-            waitForEnter();
-            break;
- 
-        case 7:
-            displayTodayAppointments(appointments);
-            waitForEnter();
-            break;
- 
-        case 0:
-            cout << "Returning to Main Menu...\n";
-            break;
+
+    do {
+        clearScreen();
+        
+        setColor(COLOR_DARK_BLUE);
+        cout << "\n  ============================================================\n";
+        cout << "  |            APPOINTMENT & QUEUE MANAGEMENT                |\n";
+        cout << "  +----------------------------------------------------------+\n";
+        cout << "  |                                                          |\n";
+        
+        setColor(COLOR_LIGHT_BLUE);
+        cout << "  |   1.  Book Appointment                                   |\n";
+        cout << "  |   2.  Display Doctor Schedule                            |\n";
+        cout << "  |   3.  Cancel Appointment                                 |\n";
+        cout << "  |   4.  Reschedule Appointment                             |\n";
+        cout << "  |   5.  Manage Patient Queue                               |\n";
+        cout << "  |   6.  Call Next Patient                                  |\n";
+        cout << "  |   7.  Display Today's Appointments                       |\n";
+        
+        setColor(COLOR_DARK_BLUE);
+        cout << "  |                                                          |\n";
+        
+        setColor(COLOR_RED);
+        cout << "  |   0.  Back to Main Menu                                  |\n";
+        
+        setColor(COLOR_DARK_BLUE);
+        cout << "  |                                                          |\n";
+        cout << "  ============================================================\n";
+        setColor(COLOR_RESET);
+
+        choice = getValidatedInt("  Enter your choice: ", 0, 7);
+
+        switch (choice) {
+            case 1: bookAppointment(appointments, patients); waitForEnter(); break;
+            case 2: displayDoctorSchedule(appointments); waitForEnter(); break;
+            case 3: cancelAppointment(appointments); waitForEnter(); break;
+            case 4: rescheduleAppointment(appointments); waitForEnter(); break;
+            case 5: manageQueue(appointments, patients); waitForEnter(); break;
+            case 6: getNextPatientInQueue(appointments); waitForEnter(); break;
+            case 7: displayTodayAppointments(appointments); waitForEnter(); break;
+            case 0: cout << "\nReturning to Main Menu...\n"; break;
+            default: cout << "\n[ERROR] Invalid choice.\n";
         }
- 
     } while (choice != 0);
 }
- 
- 
+
 // ============================================================
 // BOOK APPOINTMENT
 // ============================================================

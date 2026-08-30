@@ -393,6 +393,14 @@ void pressZeroToContinue() {
     }
 }
 
+void clearScreen() {
+    #ifdef _WIN32
+        system("cls");
+    #else
+        system("clear");
+    #endif
+}
+
 // ============================================================
 // 1. BASIC DATE VALIDATION - Format only (DD/MM/YYYY)
 //    Allows ANY valid date (past, present, or future)

@@ -934,85 +934,54 @@ void consultationMedicineMenu(
     int choice;
 
     do {
+        clearScreen();
+        
+        setColor(COLOR_DARK_BLUE);
+        cout << "\n  ============================================================\n";
+        cout << "  |          CONSULTATION & MEDICINE INVENTORY               |\n";
+        cout << "  +----------------------------------------------------------+\n";
+        cout << "  |                                                          |\n";
+        
+        setColor(COLOR_LIGHT_BLUE);
+        cout << "  |   1.  Record Consultation                                |\n";
+        cout << "  |   2.  View Medical History                               |\n";
+        cout << "  |   3.  Prescribe Medicine                                 |\n";
+        cout << "  |   4.  Display Medicine List                              |\n";
+        cout << "  |   5.  Update Medicine Stock                              |\n";
+        cout << "  |   6.  Add New Medicine                                   |\n";
+        cout << "  |   7.  Search Medicine                                    |\n";
+        cout << "  |   8.  Delete Medicine                                    |\n";
+        cout << "  |   9.  Check Low Stock Warning                            |\n";
+        cout << "  |  10.  Check Medicine Expiry Dates                        |\n";
+        cout << "  |  11.  Display Follow-up Reminders                        |\n";
+        
+        setColor(COLOR_DARK_BLUE);
+        cout << "  |                                                          |\n";
+        
+        setColor(COLOR_RED);
+        cout << "  |  12.  Back to Main Menu                                  |\n";
+        
+        setColor(COLOR_DARK_BLUE);
+        cout << "  |                                                          |\n";
+        cout << "  ============================================================\n";
+        setColor(COLOR_RESET);
 
-        cout << "\n";
-        cout << "=================================================\n";
-        cout << "  CONSULTATION & MEDICINE INVENTORY MANAGEMENT\n";
-        cout << "=================================================\n";
-
-        cout << "1.  Record Consultation\n";
-        cout << "2.  View Medical History\n";
-        cout << "3.  Prescribe Medicine\n";
-        cout << "4.  Display Medicine List\n";
-        cout << "5.  Update Medicine Stock\n";
-        cout << "6.  Add New Medicine\n";
-        cout << "7.  Search Medicine\n";
-        cout << "8.  Delete Medicine\n";
-        cout << "9.  Check Low Stock Warning\n";
-        cout << "10. Check Medicine Expiry Dates\n";
-        cout << "11. Display Follow-up Reminders\n";
-        cout << "12. Back to Main Menu\n";
-
-        choice = getValidatedMenuChoice(
-            "\nEnter your choice: ",
-            1,
-            12
-        );
+        choice = getValidatedMenuChoice("\n  Enter your choice: ", 1, 12);
 
         switch (choice) {
-
-            case 1:
-                recordConsultation(consultations, patients);
-                break;
-
-            case 2:
-                viewMedicalHistory(consultations, patients);
-                break;
-
-            case 3:
-                prescribeMedicine(consultations, medicineInventory, patients, doctors);
-                break;
-
-            case 4:
-                displayMedicineList(medicineInventory);
-                pressZeroToContinue();
-                break;
-
-            case 5:
-                updateMedicineStock(medicineInventory);
-                break;
-
-            case 6:
-                addNewMedicine(medicineInventory);
-                break;
-
-            case 7:
-                searchMedicine(medicineInventory);
-                break;
-
-            case 8:
-                deleteMedicine(medicineInventory);
-                break;
-
-            case 9:
-                displayLowStockWarning(medicineInventory, 10);
-                break;
-
-            case 10:
-                checkExpiryDate(medicineInventory);
-                break;
-
-            case 11:
-                displayFollowUpReminder(consultations, patients);
-                break;
-
-            case 12:
-                cout << "\nReturning to Main Menu...\n";
-                break;
-
-            default:
-                cout << "\nInvalid choice. Please try again.\n";
+            case 1: recordConsultation(consultations, patients); break;
+            case 2: viewMedicalHistory(consultations, patients); break;
+            case 3: prescribeMedicine(consultations, medicineInventory, patients, doctors); break;
+            case 4: displayMedicineList(medicineInventory); pressZeroToContinue(); break;
+            case 5: updateMedicineStock(medicineInventory); break;
+            case 6: addNewMedicine(medicineInventory); break;
+            case 7: searchMedicine(medicineInventory); break;
+            case 8: deleteMedicine(medicineInventory); break;
+            case 9: displayLowStockWarning(medicineInventory, 10); break;
+            case 10: checkExpiryDate(medicineInventory); break;
+            case 11: displayFollowUpReminder(consultations, patients); break;
+            case 12: cout << "\nReturning to Main Menu...\n"; break;
+            default: cout << "\nInvalid choice. Please try again.\n";
         }
-
     } while (choice != 12);
 }
