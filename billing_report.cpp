@@ -26,7 +26,7 @@ double calculateConsultationFee(string doctorType);
 double calculateMedicineFee(vector<MedicineItem> medicines);
 void   addBillingRecord(vector<BillRecord>& billRecords, BillRecord newBill);
 void   generateBill(vector<BillRecord>& billRecords, Patient patient, Consultation consult,
-                     string doctorType, vector<MedicineItem> medicines, char patientType);
+                     vector<MedicineItem> medicines, char patientType);
 int    searchBillingRecord(vector<BillRecord> billRecords, int billID);
 bool   processPayment(BillRecord& bill, double amountReceived, char paymentMethod);
 void   printReceipt(BillRecord bill);
@@ -63,17 +63,17 @@ void addBillingRecord(vector<BillRecord>& billRecords, BillRecord newBill) {
 }
 
 void generateBill(vector<BillRecord>& billRecords, Patient patient, Consultation consult,
-                   string doctorType, vector<MedicineItem> medicines, char patientType) {
+                   vector<MedicineItem> medicines, char patientType) {
     BillRecord newBill;
     newBill.billID        = 1000 + (int)billRecords.size() + 1;
     newBill.patientID     = patient.patientID;
     newBill.doctorID      = consult.doctorID;
-    newBill.doctorType    = doctorType;
+    newBill.doctorType    = consult.doctorType;         // 直接用Consultation记录的doctorType，不再重新问
     newBill.serviceDate   = consult.consultationDate;   // 适配 Consultation 结构体
     // 注意：BillRecord 没有 diagnosis 字段，所以这行已删除
     newBill.medicines     = medicines;
 
-    newBill.consultationFee = calculateConsultationFee(doctorType);
+    newBill.consultationFee = calculateConsultationFee(consult.doctorType);
     newBill.medicineFee     = calculateMedicineFee(medicines);
 
     double discount = 0;
@@ -306,18 +306,6 @@ void billingReportMenu(vector<BillRecord>& billRecords, vector<Patient>& patient
                 }
                 Consultation consult = consultations[cIdx];
 
-                string doctorType;
-                while (true) {
-                    doctorType = getNonEmptyString("Doctor Type (G=General, S=Specialist): ");
-                    if (doctorType.length() == 1) {
-                        char c = toupper(doctorType[0]);
-                        if (c == 'S' || c == 'M' || c == 'N') {
-                            break;
-                        }
-                    }
-                    cout << "[ERROR] Invalid input. Please enter S, M, or N.\n";
-                }
-
                 vector<MedicineItem> medicines;
                 int medCount = getNonNegativeInt("Number of medicine items prescribed: ");
                 for (int i = 0; i < medCount; i++) {
@@ -349,7 +337,7 @@ void billingReportMenu(vector<BillRecord>& billRecords, vector<Patient>& patient
                 }
                 char patientType = toupper(patientTypeInput[0]);
 
-                generateBill(billRecords, patient, consult, doctorType, medicines, patientType);
+                generateBill(billRecords, patient, consult, medicines, patientType);
                 break;
             }
             case 2: {
