@@ -1,9 +1,9 @@
 #ifndef CLINIC_SHARED_H
 #define CLINIC_SHARED_H
 
-//============================================================
-//  Shared Structures & Constants
-//============================================================
+// ============================================================
+// Shared Structures & Constants
+// ============================================================
 
 #include <string>
 #include <vector>
@@ -12,37 +12,38 @@ using namespace std;
 // ============================================================
 // Shared Named Constants
 // ============================================================
-const int    IC_LENGTH             = 14;        // IC format (format: XXXXXX-XX-XXXX)
-const int    MAX_DAILY_SLOTS       = 20;        // 每位医生每天最多可预约的时段数
-const int    MIN_STOCK_LEVEL       = 10;        // 药物低库存警示门槛
-const int    MIN_PASSWORD_LENGTH   = 6;         // 注册新帐号时密码最短长度
-const int    MAX_LOGIN_ATTEMPTS    = 3;         // 登入最多允许失败几次（来自Lemet）
-const double GENERAL_CONSULT_FEE   = 45.00;     // 普通科诊金（来自Lemet）
-const double SPECIALIST_CONSULT_FEE = 80.00;    // 专科诊金（来自Lemet，取代原本的PEDIATRIC_CONSULT_FEE）
-const double SST_RATE              = 0.06;      // 服务税率6%（来自Lemet）
-const int MAX_DOCTORS = 3;
-// 颜色常量
-const int COLOR_RESET        = 7;    // 白色（默认）
-const int COLOR_DARK_BLUE    = 1;    // 深蓝
-const int COLOR_BRIGHT_BLUE  = 9;    // 亮蓝
-const int COLOR_CYAN         = 3;    // 青色
-const int COLOR_LIGHT_BLUE   = 11;   // 淡蓝
-const int COLOR_RED          = 12;   // 亮红
+const int    IC_LENGTH             = 14;        // IC format: XXXXXX-XX-XXXX
+const int    MAX_DAILY_SLOTS       = 20;        // Max appointment slots per doctor per day
+const int    MIN_STOCK_LEVEL       = 10;        // Low stock warning threshold
+const int    MIN_PASSWORD_LENGTH   = 6;         // Minimum password length for new accounts
+const int    MAX_LOGIN_ATTEMPTS    = 3;         // Max login attempts allowed
+const double GENERAL_CONSULT_FEE   = 45.00;     // General consultation fee
+const double SPECIALIST_CONSULT_FEE = 80.00;    // Specialist consultation fee
+const double SST_RATE              = 0.06;      // Service tax rate 6%
+const int MAX_DOCTORS = 3;                      // Maximum number of doctors
 
-// 设置控制台颜色的函数
+// Color constants
+const int COLOR_RESET        = 7;    // White (default)
+const int COLOR_DARK_BLUE    = 1;    // Dark blue
+const int COLOR_BRIGHT_BLUE  = 9;    // Bright blue
+const int COLOR_CYAN         = 3;    // Cyan
+const int COLOR_LIGHT_BLUE   = 11;   // Light blue
+const int COLOR_RED          = 12;   // Bright red
+
+// Function to set console color
 void setColor(int color);
 
 // ============================================================
-// STRUCT 0：Staff
-// ------------------------------------------------------------
+// STRUCT 0: Staff
+// ============================================================
 struct Staff {
     string username;
     string password;
-    string role;    // Eg: "Nurse", "Doctor"
+    string role;    // e.g., "Nurse", "Doctor"
 };
 
 // ============================================================
-// STRUCT 1：Patient —— Patient Management
+// STRUCT 1: Patient (Patient Management)
 // ============================================================
 struct Patient {
     int patientID;
@@ -55,8 +56,8 @@ struct Patient {
 };
 
 // ============================================================
-// STRUCT 2：Appointment 
-// ------------------------------------------------------------
+// STRUCT 2: Appointment
+// ============================================================
 struct Appointment {
     int appointmentID;
     int patientID;
@@ -64,11 +65,11 @@ struct Appointment {
     string doctorType;      // "General" or "Specialist"
     string appointmentDate;
     string timeSlot;
-    string status;           // "Pending" / "Completed" / "Cancelled"
+    string status;          // "Pending" / "Completed" / "Cancelled"
 };
 
 // ============================================================
-// STRUCT 3: PrescribedMedicine (Must be defined before Consultation)
+// STRUCT 3: PrescribedMedicine (must be defined before Consultation)
 // ============================================================
 struct PrescribedMedicine {
     int medicineID;
@@ -77,7 +78,7 @@ struct PrescribedMedicine {
 };
 
 // ============================================================
-// STRUCT 4：Consultation
+// STRUCT 4: Consultation
 // ============================================================
 struct Consultation {
     int consultationID;
@@ -87,12 +88,12 @@ struct Consultation {
     string diagnosis;
     string consultationDate;
     string followUpDate;
-    vector<PrescribedMedicine> prescribedMedicines;  // List of prescribed medicines
+    vector<PrescribedMedicine> prescribedMedicines;
 };
 
 // ============================================================
-// STRUCT 5：Medicine —— Consultation模块负责人维护
-// ------------------------------------------------------------
+// STRUCT 5: Medicine (maintained by Consultation module)
+// ============================================================
 struct Medicine {
     int medicineID;
     string medicineName;
@@ -102,8 +103,8 @@ struct Medicine {
 };
 
 // ============================================================
-// STRUCT 6：MedicineItem 
-// ------------------------------------------------------------
+// STRUCT 6: MedicineItem (used in billing)
+// ============================================================
 struct MedicineItem {
     string name;
     int qty;
@@ -111,13 +112,13 @@ struct MedicineItem {
 };
 
 // ============================================================
-// STRUCT 7：BillRecord —— Billing模块负责人维护
-// ------------------------------------------------------------
+// STRUCT 7: BillRecord (maintained by Billing module)
+// ============================================================
 struct BillRecord {
     int billID;
     int patientID;
     int doctorID;
-    int consultationID;      // links this bill to the exact consultation it was billed for
+    int consultationID;      // Links to the exact consultation
     string serviceDate;
     double consultationFee;
     double medicineFee;
@@ -130,6 +131,9 @@ struct BillRecord {
     vector<MedicineItem> medicines;
 };
 
+// ============================================================
+// STRUCT 8: Doctor
+// ============================================================
 struct Doctor {
     int doctorID;
     string name;
@@ -139,14 +143,13 @@ struct Doctor {
 // ============================================================
 // Global Shared Data
 // ============================================================
-extern vector<Staff>          staffList;   
+extern vector<Staff>          staffList;
 extern vector<Patient>        patients;
 extern vector<Appointment>    appointments;
 extern vector<Consultation>   consultations;
 extern vector<Medicine>       medicines;
 extern vector<BillRecord>     billRecords;
 extern vector<Doctor>         doctors;
-
 
 extern int doctorIDs[MAX_DOCTORS];
 extern string doctorNames[MAX_DOCTORS];

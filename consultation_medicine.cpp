@@ -1,3 +1,9 @@
+/*
+    ============================================================
+    Consultation & Medicine Inventory Management Module
+    Siow Pei En
+    ============================================================
+ */
 #include <iostream>
 #include <iomanip>
 #include <limits>
@@ -8,25 +14,9 @@
 
 using namespace std;
 
-// ============================================================
-// HELPER FUNCTION: Find Doctor
-// ============================================================
-
-int findDoctorIndex(
-    const vector<Doctor>& doctors,
-    int doctorID
-) {
-    for (int i = 0; i < doctors.size(); i++) {
-        if (doctors[i].doctorID == doctorID) {
-            return i;
-        }
-    }
-    return -1;
-}
-
-// ============================================================
-// HELPER FUNCTION: Display Doctor List
-// ============================================================
+/* ============================================================
+   HELPER FUNCTION: Display Doctor List
+   ============================================================ */
 
 void displayDoctorList(const vector<Doctor>& doctors) {
     if (doctors.empty()) {
@@ -52,63 +42,9 @@ void displayDoctorList(const vector<Doctor>& doctors) {
     cout << "========================================\n\n";
 }
 
-// ============================================================
-// HELPER FUNCTION: Find Patient
-// ============================================================
-
-int findPatientIndex(
-    const vector<Patient>& patients,
-    int patientID
-) {
-    for (int i = 0; i < patients.size(); i++) {
-        if (patients[i].patientID == patientID) {
-            return i;
-        }
-    }
-
-    return -1;
-}
-
-
-// ============================================================
-// HELPER FUNCTION: Find Medicine
-// ============================================================
-
-int findMedicineIndex(
-    const vector<Medicine>& medicineInventory,
-    int medicineID
-) {
-    for (int i = 0; i < medicineInventory.size(); i++) {
-        if (medicineInventory[i].medicineID == medicineID) {
-            return i;
-        }
-    }
-
-    return -1;
-}
-
-
-// ============================================================
-// HELPER FUNCTION: Find Consultation
-// ============================================================
-
-int findConsultationIndex(
-    const vector<Consultation>& consultations,
-    int consultationID
-) {
-    for (int i = 0; i < consultations.size(); i++) {
-        if (consultations[i].consultationID == consultationID) {
-            return i;
-        }
-    }
-
-    return -1;
-}
-
-
-// ============================================================
-// 1. RECORD CONSULTATION
-// ============================================================
+/* ============================================================
+   1. RECORD CONSULTATION
+   ============================================================ */
 
 void recordConsultation(
     vector<Consultation>& consultations,
@@ -243,13 +179,12 @@ void recordConsultation(
     cout << "Follow-up: " << newConsultation.followUpDate << endl;
     cout << "==========================================\n";
     
-    pressZeroToContinue();
+    waitForEnter();
 }
 
-
-// ============================================================
-// 2. VIEW MEDICAL HISTORY
-// ============================================================
+/* ============================================================
+   2. VIEW MEDICAL HISTORY
+   ============================================================ */
 
 void viewMedicalHistory(
     const vector<Consultation>& consultations,
@@ -329,10 +264,9 @@ void viewMedicalHistory(
     pressZeroToContinue();
 }
 
-
-// ============================================================
-// 3. CHECK STOCK AVAILABILITY
-// ============================================================
+/* ============================================================
+   3. CHECK STOCK AVAILABILITY
+   ============================================================ */
 
 bool checkStockAvailability(
     const vector<Medicine>& medicineInventory,
@@ -364,10 +298,9 @@ bool checkStockAvailability(
     return true;
 }
 
-
-// ============================================================
-// 4. PRESCRIBE MEDICINE
-// ============================================================
+/* ============================================================
+   4. PRESCRIBE MEDICINE
+   ============================================================ */
 
 void prescribeMedicine(
     vector<Consultation>& consultations,
@@ -500,19 +433,19 @@ void prescribeMedicine(
     cout << "Total medicines prescribed: " << consultation.prescribedMedicines.size() << endl;
     cout << "==========================================\n";
 
-    pressZeroToContinue();
+    waitForEnter();
 }
 
-
-// ============================================================
-// 5. DISPLAY MEDICINE LIST
-// ============================================================
+/* ============================================================
+   5. DISPLAY MEDICINE LIST
+   ============================================================ */
 
 void displayMedicineList(
     const vector<Medicine>& medicineInventory
 ) {
     if (medicineInventory.empty()) {
         cout << "\nNo medicine records found.\n";
+        pressZeroToContinue();   
         return;
     }
 
@@ -538,12 +471,13 @@ void displayMedicineList(
              << setw(15) << medicine.expiryDate
              << endl;
     }
+    
+    pressZeroToContinue();  
 }
 
-
-// ============================================================
-// 6. UPDATE MEDICINE STOCK
-// ============================================================
+/* ============================================================
+   6. UPDATE MEDICINE STOCK
+   ============================================================ */
 
 void updateMedicineStock(
     vector<Medicine>& medicineInventory
@@ -595,13 +529,12 @@ void updateMedicineStock(
     cout << "New Stock Quantity: " << medicineInventory[index].quantity << endl;
     cout << "==========================================\n";
     
-    pressZeroToContinue();
+    waitForEnter();
 }
 
-
-// ============================================================
-// 7. ADD NEW MEDICINE - AUTO-GENERATE MEDICINE ID WITH EXPIRY VALIDATION
-// ============================================================
+/* ============================================================
+   7. ADD NEW MEDICINE - AUTO-GENERATE MEDICINE ID WITH EXPIRY VALIDATION
+   ============================================================ */
 
 void addNewMedicine(
     vector<Medicine>& medicineInventory
@@ -642,13 +575,12 @@ void addNewMedicine(
     cout << "Expiry Date: " << newMedicine.expiryDate << endl;
     cout << "==========================================\n";
     
-    pressZeroToContinue();
+    waitForEnter();
 }
 
-
-// ============================================================
-// 8. SEARCH MEDICINE
-// ============================================================
+/* ============================================================
+   8. SEARCH MEDICINE
+   ============================================================ */
 
 void searchMedicine(
     const vector<Medicine>& medicineInventory
@@ -694,10 +626,9 @@ void searchMedicine(
     pressZeroToContinue();
 }
 
-
-// ============================================================
-// 9. DELETE MEDICINE
-// ============================================================
+/* ============================================================
+   9. DELETE MEDICINE
+   ============================================================ */
 
 void deleteMedicine(
     vector<Medicine>& medicineInventory
@@ -744,13 +675,12 @@ void deleteMedicine(
     else {
         cout << "Delete operation cancelled.\n";
     }
-    pressZeroToContinue();
+    waitForEnter();
 }
 
-
-// ============================================================
-// 10. LOW STOCK WARNING
-// ============================================================
+/* ============================================================
+   10. LOW STOCK WARNING
+   ============================================================ */
 
 void displayLowStockWarning(
     const vector<Medicine>& medicineInventory,
@@ -779,10 +709,9 @@ void displayLowStockWarning(
     pressZeroToContinue();
 }
 
-
-// ============================================================
-// 11. CHECK EXPIRY DATE
-// ============================================================
+/* ============================================================
+   11. CHECK EXPIRY DATE
+   ============================================================ */
 
 void checkExpiryDate(
     const vector<Medicine>& medicineInventory
@@ -839,10 +768,9 @@ void checkExpiryDate(
     pressZeroToContinue();
 }
 
-
-// ============================================================
-// 12. FOLLOW-UP REMINDER
-// ============================================================
+/* ============================================================
+   12. FOLLOW-UP REMINDER
+   ============================================================ */
 
 void displayFollowUpReminder(
     const vector<Consultation>& consultations,
@@ -920,10 +848,9 @@ void displayFollowUpReminder(
     pressZeroToContinue();
 }
 
-
-// ============================================================
-// MAIN MODULE MENU
-// ============================================================
+/* ============================================================
+   MAIN MENU
+   ============================================================ */
 
 void consultationMedicineMenu(
     vector<Consultation>& consultations,
@@ -933,9 +860,8 @@ void consultationMedicineMenu(
 ) {
     int choice;
 
-    do {
+    do {        
         clearScreen();
-        
         setColor(COLOR_DARK_BLUE);
         cout << "\n  ============================================================\n";
         cout << "  |          CONSULTATION & MEDICINE INVENTORY               |\n";
@@ -972,7 +898,7 @@ void consultationMedicineMenu(
             case 1: recordConsultation(consultations, patients); break;
             case 2: viewMedicalHistory(consultations, patients); break;
             case 3: prescribeMedicine(consultations, medicineInventory, patients, doctors); break;
-            case 4: displayMedicineList(medicineInventory); pressZeroToContinue(); break;
+            case 4: displayMedicineList(medicineInventory); break;
             case 5: updateMedicineStock(medicineInventory); break;
             case 6: addNewMedicine(medicineInventory); break;
             case 7: searchMedicine(medicineInventory); break;

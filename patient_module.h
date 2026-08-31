@@ -1,9 +1,11 @@
-//Patient Management Module .h file — Chia Koh Suan
-
 #ifndef PATIENT_MODULE_H
 #define PATIENT_MODULE_H
 
 #include "clinic_shared.h"
+
+// ============================================================
+// Function Prototypes
+// ============================================================
 
 bool validateICFormat(const string& ic);
 bool checkDuplicateIC(const string& ic);

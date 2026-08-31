@@ -1,20 +1,25 @@
-// #ifndef / #define / #endif 就是 Header Guard，用来避免同一个 declaration / definition 被处理多次。
+// Header Guard: prevents multiple inclusions
 #ifndef INPUT_UTILS_H
 #define INPUT_UTILS_H
+
 /*
  ============================================================
   Input Validation Utilities
- ------------------------------------------------------------
-  可以一起用的Input Validation工具
-  Eg. 
-  当cin>>int遇到num/符号这种非数字输入时，cin会进入"fail state"，如果没有正确清除，会导致程序stuck或无限loop
+ ============================================================
+  Provides robust input handling with fail-state recovery.
+  Example: When cin >> int receives non-numeric input, cin enters
+  a fail state; these functions properly clear and re-prompt.
  ============================================================
  */
 
 #include <string>
+#include <limits>
 using namespace std;
 
-// Date validation functions
+// ============================================================
+// Date Validation Functions
+// ============================================================
+
 bool isValidDate(const string& date);
 string getValidatedDate(const string& prompt);
 
@@ -24,69 +29,101 @@ string getValidatedFutureDate(const string& prompt);
 bool isValidExpiryDate(const string& date);
 string getValidatedExpiryDate(const string& prompt);
 
+// ============================================================
+// Integer Input (with range)
+// ============================================================
 
-
-// Read an integer until the user enters a valid number (range can be specified)
-// Eg：int choice = readValidatedInt("Enter your choice: ", 1, 6);
 int readValidatedInt(const string& prompt, int minVal, int maxVal);
 
+// ============================================================
+// Gender Input (M/F only)
+// ============================================================
 
-// Read gender, only accept m/M/f/F
 char readValidatedGender();
 
+// ============================================================
+// Non‑Empty Line Input
+// ============================================================
 
-// Read a line of text, disallowing empty input(such as enter only)
 string readNonEmptyLine(const string& prompt);
 
+// ============================================================
+// Double Input (with minimum value)
+// ============================================================
 
-// Read a double value
-// Eg: double price = readValidatedDouble("Unit price: ", 0.0);
 double readValidatedDouble(const string& prompt, double minVal);
 
+// ============================================================
+// Phone Number Input (digits and hyphen, 9‑11 digits)
+// ============================================================
 
-// Read phone numbers: only numbers and "-" symbols are allowed, and the total number of numbers must be between 9-11 digits
 string readValidatedPhone(const string& prompt);
 
+// ============================================================
+// Alphabetic‑Only Input (letters and spaces only)
+// ============================================================
 
-// Read alphabetic-only input, not allowing numbers and symbols
 string readAlphaOnly(const string& prompt);
 
-// Read any integer from user input (no range restriction)
-// Returns the integer entered by the user
+// ============================================================
+// Generic Integer Input (no range)
+// ============================================================
+
 int getValidatedInt(const string& prompt);
 
-// Read a positive integer (greater than 0)
-// Prompts until user enters a valid positive number
+// ============================================================
+// Positive Integer Input (>0)
+// ============================================================
+
 int getPositiveInt(const string& prompt);
 
-// Read a non-negative integer (0 or greater)
-// Prompts until user enters a valid non-negative number
+// ============================================================
+// Non‑Negative Integer Input (>=0)
+// ============================================================
+
 int getNonNegativeInt(const string& prompt);
 
-// Read any double from user input
-// Returns the double value entered by the user
+// ============================================================
+// Generic Double Input
+// ============================================================
+
 double getValidatedDouble(const string& prompt);
 
-// Read a non-negative double (0.0 or greater)
-// Prompts until user enters a valid non-negative number
+// ============================================================
+// Non‑Negative Double Input (>=0.0)
+// ============================================================
+
 double getNonNegativeDouble(const string& prompt);
 
-// Read a non-empty string
-// Rejects empty input and prompts until the user enters something
+// ============================================================
+// Non‑Empty String Input
+// ============================================================
+
 string getNonEmptyString(const string& prompt);
 
-// Read a Yes/No response
-// Accepts 'Y', 'y', 'N', 'n' and returns the uppercase character
+// ============================================================
+// Yes/No Input (Y/N)
+// ============================================================
+
 char getYesNo(const string& prompt);
 
-// Read a menu choice within a specified range
-// Prompts until the user enters a valid option between minOption and maxOption
+// ============================================================
+// Menu Choice Input (within range)
+// ============================================================
+
 int getValidatedMenuChoice(const string& prompt, int minOption, int maxOption);
 
-// Pause execution and wait for the user to press 0 to continue
-// Used after displaying results so the user can read before the menu reappears
-void pressZeroToContinue();                            
+// ============================================================
+// UI Control Functions
+// ============================================================
 
+// Pause until user presses 0 (for viewing lists/reports)
+void pressZeroToContinue();
+
+// Pause until user presses Enter (lighter, for operation feedback)
+void waitForEnter();
+
+// Clear terminal screen
 void clearScreen();
 
 #endif

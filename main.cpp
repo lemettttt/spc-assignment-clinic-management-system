@@ -1,7 +1,3 @@
-//===========================================================
-// main.cpp — Clinic Management System
-//============================================================
-
 #include <iostream>
 #include <cctype>
 #include "clinic_shared.h"
@@ -10,11 +6,11 @@
 #include "patient_module.h"
 #include "appointment_queuemanagement.h"
 #include "consultation_medicine.h"
-#include "billing_report.h"          
+#include "billing_report.h"
 using namespace std;
 
 // ============================================================
-// 欢迎界面（蓝色系）
+// Welcome Screen
 // ============================================================
 
 void displayIntroScreen() {
@@ -46,7 +42,7 @@ void displayIntroScreen() {
 }
 
 // ============================================================
-// 主菜单（蓝色系）
+// MAIN MENU
 // ============================================================
 
 void displayMainMenu() {
@@ -67,7 +63,7 @@ void displayMainMenu() {
     cout << "  |                                                          |\n";
     
     setColor(COLOR_RED);
-    cout << "  |   5.  Exit                                               |\n";
+    cout << "  |   5.  Logout                                             |\n";
     
     setColor(COLOR_DARK_BLUE);
     cout << "  |                                                          |\n";
@@ -77,14 +73,11 @@ void displayMainMenu() {
     cout << "\n";
 }
 
-// ============================================================
-// main()
-// ============================================================
-
 int main() {
-    clearScreen(); 
+    clearScreen();
     seedSharedData();
     displayIntroScreen();
+    waitForEnter();
     authenticationGate();
 
     int choice;
@@ -94,24 +87,28 @@ int main() {
         choice = readValidatedInt("  Enter your choice: ", 1, 5);
 
         switch (choice) {
-            case 1: 
+            case 1:
                 patientManagementMenu();
                 break;
-            case 2: 
+            case 2:
                 appointmentQueueMenu(appointments, patients);
                 break;
-            case 3: 
+            case 3:
                 consultationMedicineMenu(consultations, medicines, patients, doctors);
                 break;
-            case 4: 
+            case 4:
                 billingReportMenu(billRecords, patients, consultations, medicines);
-                break;  
-            case 5: 
-                cout << "\n  [System] Logging out and returning to login screen...\n";
-                authenticationGate();
                 break;
-            default: 
+            case 5:
+                cout << "\n  [System] Logging out and returning to login screen...\n";
+                waitForEnter();
+                authenticationGate();   // Return to login screen
+                // Reset choice to avoid exiting the outer loop
+                choice = 0;
+                break;
+            default:
                 cout << "\n  [ERROR] Invalid choice. Please enter 1-5.\n";
+                pressZeroToContinue();
         }
     } while (choice != 5);
 

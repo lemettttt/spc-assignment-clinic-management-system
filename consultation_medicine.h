@@ -7,10 +7,13 @@
 
 using namespace std;
 
-// NOTE: PrescribedMedicine and Consultation structs are defined in clinic_shared.h
-// DO NOT redefine them here!
+// NOTE: PrescribedMedicine and Consultation are defined in clinic_shared.h.
+// Do not redefine them here.
 
-// Function prototypes
+// ============================================================
+// Function Prototypes
+// ============================================================
+
 void consultationMedicineMenu(
     vector<Consultation>& consultations,
     vector<Medicine>& medicineInventory,
@@ -69,7 +72,10 @@ void displayFollowUpReminder(
     const vector<Patient>& patients
 );
 
-// Helper functions
+// ============================================================
+// Helper Functions
+// ============================================================
+
 int findDoctorIndex(
     const vector<Doctor>& doctors,
     int doctorID

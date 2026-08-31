@@ -1,9 +1,10 @@
 /*
- * ============================================================
- *  patient_module.cpp — Patient Management Module 
- *  Chia Koh Suan
- * ============================================================
+    ============================================================
+    Patient Management Module
+    Chia Koh Suan
+    ============================================================
  */
+
 #include <iostream>
 #include <iomanip>
 #include <cctype>
@@ -11,7 +12,7 @@
 #include "input_utils.h"
 using namespace std;
 
-// STEP 1：validateICFormat()
+// Validate IC format (XXXXXX-XX-XXXX)
 bool validateICFormat(const string& ic) {
     if (ic.length() != IC_LENGTH) {
         return false;
@@ -33,7 +34,7 @@ bool validateICFormat(const string& ic) {
     return true;
 }
 
-// STEP 2：checkDuplicateIC()
+// Check for duplicate IC number
 bool checkDuplicateIC(const string& ic) {
     for (int i = 0; i < (int)patients.size(); i++) {
         if (patients[i].icNumber == ic)
@@ -42,7 +43,7 @@ bool checkDuplicateIC(const string& ic) {
     return false;
 }
 
-// STEP 3：searchPatientByIC()
+// Search patient by IC; returns index or -1
 int searchPatientByIC(const string& ic) {
     for (int i = 0; i < (int)patients.size(); i++) {
         if (patients[i].icNumber == ic)
@@ -51,7 +52,7 @@ int searchPatientByIC(const string& ic) {
     return -1;
 }
 
-// STEP 4：searchPatientByName()
+// Search patient by name; returns index or -1
 int searchPatientByName(const string& name) {
     for (int i = 0; i < (int)patients.size(); i++) {
         if (patients[i].name == name)
@@ -60,7 +61,7 @@ int searchPatientByName(const string& name) {
     return -1;
 }
 
-// STEP 5：displayPatientRecord()
+// Display a single patient record
 void displayPatientRecord(const Patient& p) {
     cout << "\n---------------------------------------------\n";
     cout << left << setw(16) << "Patient ID"  << ": " << p.patientID << "\n";
@@ -82,22 +83,23 @@ void displayPatientRecord(const Patient& p) {
     cout << "---------------------------------------------\n";
 }
 
-// STEP 6：viewAllPatients()
+// Display all patient records in a table
 void viewAllPatients() {
     cout << "\n===================== ALL PATIENTS =====================\n";
 
     if (patients.empty()) {
         cout << "  (No patient records found)\n";
+        pressZeroToContinue();   
         return;
     }
 
-    cout << left 
-        << setw(6) << "ID" 
-        << setw(16) << "IC Number" 
-        << setw(18) << "Name" 
-        << setw(5) << "Age" 
-        << setw(5) << "Gen" 
-        << setw(14) << "Phone" 
+    cout << left
+        << setw(6) << "ID"
+        << setw(16) << "IC Number"
+        << setw(18) << "Name"
+        << setw(5) << "Age"
+        << setw(5) << "Gen"
+        << setw(14) << "Phone"
         << "Allergy\n";
 
     cout << string(80, '-') << "\n";
@@ -122,9 +124,10 @@ void viewAllPatients() {
         cout << "\n";
     }
     cout << "==========================================================\n";
+    pressZeroToContinue();   
 }
 
-// STEP 7：registerNewPatient()
+// Register a new patient
 void registerNewPatient() {
     string ic, name, phone, allergy;
     int age;
@@ -133,8 +136,13 @@ void registerNewPatient() {
     cout << "\n----- REGISTER NEW PATIENT -----\n";
 
     while (true) {
-        cout << "\nEnter IC Number (format: XXXXXX-XX-XXXX): ";
+        cout << "\nEnter IC Number (format: XXXXXX-XX-XXXX, or 0 to cancel): ";
         getline(cin, ic);
+
+        if (ic == "0") {
+            cout << "[System] Registration cancelled.\n";
+            return;
+        }
 
         if (!validateICFormat(ic)) {
             cout << "[ERROR] Invalid IC format. Please use format XXXXXX-XX-XXXX.\n";
@@ -147,6 +155,7 @@ void registerNewPatient() {
         int idx = searchPatientByIC(ic);
         cout << "[ERROR] Duplicate IC. Already registered as Patient ID " << patients[idx].patientID << " (" << patients[idx].name << ").\n";
         cout << "[System] Registration cancelled.\n";
+        pressZeroToContinue();   
         return;
     }
 
@@ -172,23 +181,31 @@ void registerNewPatient() {
     patients.push_back(p);
 
     cout << "\n[System] Patient registered successfully! Patient ID: " << p.patientID << "\n";
+    waitForEnter(); 
 }
 
-// STEP 8：updatePatientInfo()
+// Update patient information by IC
 void updatePatientInfo() {
     if (patients.empty()) {
         cout << "\n[ERROR] No patient records found. Please register a patient first.\n";
+        pressZeroToContinue();   
         return;
     }
 
     string ic;
     cout << "\n----- UPDATE PATIENT INFORMATION -----\n";
-    cout << "\nEnter Patient IC to update: ";
+    cout << "\nEnter Patient IC to update (or 0 to cancel): ";
     getline(cin, ic);
+
+    if (ic == "0") {
+        cout << "[System] Update cancelled.\n";
+        return;
+    }
 
     int idx = searchPatientByIC(ic);
     if (idx == -1) {
         cout << "[ERROR] Patient with this IC not found.\n";
+        pressZeroToContinue();  
         return;
     }
 
@@ -229,6 +246,7 @@ void updatePatientInfo() {
                     continue;
                 }
                 break;
+                
             }
 
             patients[idx].icNumber = newIC;
@@ -282,10 +300,11 @@ void updatePatientInfo() {
             cout << "[System] Update cancelled.\n";
             break;
     }
+    waitForEnter();  
 }
 
 // ============================================================
-// STEP 9：patientManagementMenu() — 患者管理菜单（蓝色系）
+// MAIN MENU
 // ============================================================
 void patientManagementMenu() {
     int choice;
@@ -325,30 +344,40 @@ void patientManagementMenu() {
             case 2: {
                 if (patients.empty()) {
                     cout << "\n[ERROR] No patient records found. Please register a patient first.\n";
+                    pressZeroToContinue();   
                     break;
                 }
-                string ic = readNonEmptyLine("\nEnter IC to search: ");
+                string ic = readNonEmptyLine("\nEnter IC to search (or 0 to cancel): ");
+                if (ic == "0") {
+                    break;
+                }
                 int idx = searchPatientByIC(ic);
                 if (idx == -1) {
                     cout << "[ERROR] Patient not found.\n";
                 } else {
                     displayPatientRecord(patients[idx]);
                 }
+                pressZeroToContinue();   
                 break;
             }
 
             case 3: {
                 if (patients.empty()) {
                     cout << "\n[ERROR] No patient records found. Please register a patient first.\n";
+                    pressZeroToContinue();   
                     break;
                 }
-                string name = readNonEmptyLine("\nEnter name to search: ");
+                string name = readNonEmptyLine("\nEnter name to search (or 0 to cancel): ");
+                if (name == "0") {
+                    break;
+                }
                 int idx = searchPatientByName(name);
                 if (idx == -1) {
                     cout << "[ERROR] Patient not found.\n";
                 } else {
                     displayPatientRecord(patients[idx]);
                 }
+                pressZeroToContinue();   
                 break;
             }
             case 4: 
@@ -356,7 +385,7 @@ void patientManagementMenu() {
                 break;
 
             case 5: 
-                viewAllPatients(); 
+                viewAllPatients();   
                 break;
 
             case 6: 
@@ -365,6 +394,7 @@ void patientManagementMenu() {
 
             default: 
                 cout << "[ERROR] Invalid choice. Please enter 1-6.\n";
+                pressZeroToContinue();   
         }
     } while (choice != 6);
 }
