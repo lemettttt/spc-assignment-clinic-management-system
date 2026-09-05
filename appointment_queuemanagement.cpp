@@ -15,6 +15,7 @@
  
 #include "appointment_queuemanagement.h"
 #include "input_utils.h"
+#include "clinic_shared.h"   // ← 添加：确保 findDoctorIndex 可用
  
 using namespace std;
 
@@ -62,10 +63,9 @@ bool doctorAvailability[MAX_DOCTORS][MAX_SLOTS] =
 // ============================================================
 
 bool patientExists(const vector<Patient>& patients, int patientID);
-bool isValidDate(string date);
+// bool isValidDate(string date);
 bool isDoctorAvailable(int doctorIndex, int slotIndex);
 bool checkSlotAvailability(const vector<Appointment>& appointments, int doctorID, string date, string timeSlot);
-int getDoctorIndex(int doctorID);
 string getTodayDateString();
 bool isSlotInPast(const string& date, const string& timeSlot);
 string getValidatedAppointmentDate(const string& prompt);
@@ -89,17 +89,6 @@ bool patientExists(const vector<Patient>& patients, int patientID) {
         if (patients[i].patientID == patientID) return true;
     }
     return false;
-}
-
-// ============================================================
-// GET DOCTOR ARRAY INDEX
-// ============================================================
-
-int getDoctorIndex(int doctorID) {
-    for (int i = 0; i < MAX_DOCTORS; i++) {
-        if (doctorIDs[i] == doctorID) return i;
-    }
-    return -1;
 }
 
 // ============================================================
@@ -136,19 +125,6 @@ bool isSlotInPast(const string& date, const string& timeSlot) {
     int nowMinutes = localTime->tm_hour * 60 + localTime->tm_min;
     return slotMinutes <= nowMinutes;
 }
-
-// ============================================================
-// GENERIC VALIDATED INTEGER INPUT
-// ============================================================
-
-// ============================================================
-// NOTE: no local integer-input function here anymore — this file
-// now uses the shared getValidatedMenuChoice() from input_utils.h for
-// all range-checked integer input. The old local version used raw
-// cin >> which left a leftover '\n' in the buffer after every call,
-// causing the next getline()-based prompt to silently read an empty
-// line and skip itself.
-// ============================================================
 
 // ============================================================
 // CHECK IF DOCTOR CLINIC HOURS HAVE ENDED FOR TODAY
@@ -237,7 +213,7 @@ bool checkSlotAvailability(const vector<Appointment>& appointments, int doctorID
 // ============================================================
 
 int generateNextAppointmentID(const vector<Appointment>& appointments) {
-    int maxID = 1000;
+    int maxID = 2000;
     for (int i = 0; i < (int)appointments.size(); i++) {
         if (appointments[i].appointmentID > maxID) maxID = appointments[i].appointmentID;
     }
@@ -283,8 +259,8 @@ void appointmentQueueMenu(vector<Appointment>& appointments, vector<Patient>& pa
             case 4: rescheduleAppointment(appointments); waitForEnter(); break;
             case 5: manageQueue(appointments, patients); waitForEnter(); break;
             case 6: getNextPatientInQueue(appointments); waitForEnter(); break;
-            case 7: displayTodayAppointments(appointments); waitForEnter(); break;
-            case 0: cout << "\nReturning to Main Menu...\n"; break;
+            case 7: displayTodayAppointments(appointments); break;
+            case 0: clearScreen(); break;
             default: cout << "\n[ERROR] Invalid choice.\n";
         }
     } while (choice != 0);
@@ -531,7 +507,10 @@ void rescheduleAppointment(vector<Appointment>& appointments) {
                 return;
             }
 
-            int doctorIndex = getDoctorIndex(appointments[i].doctorID);
+            // ============================================================
+            // FIX: Use findDoctorIndex() instead of getDoctorIndex()
+            // ============================================================
+            int doctorIndex = findDoctorIndex(doctors, appointments[i].doctorID);
             if (doctorIndex == -1) {
                 cout << "\nError: Doctor record not found for this appointment.\n";
                 return;
@@ -750,7 +729,23 @@ void displayTodayAppointments(const vector<Appointment>& appointments) {
     cout << "       TODAY'S APPOINTMENTS\n";
     cout << "=========================================\n";
 
-    string date = getValidatedAppointmentDate("Enter Date (DD/MM/YYYY): ");
+    string date;
+    while (true) {
+        cout << "\nEnter Date (DD/MM/YYYY) or 0 to cancel: ";
+        getline(cin, date);
+        if (date == "0") {
+            cout << "\nCancelled.\n";
+            waitForEnter();      // 按 Enter 继续
+            return;
+        }
+        if (isValidDate(date)) {   // ← 仅验证格式，不限制日期
+            break;
+        } else {
+            cout << "[ERROR] Invalid date format. Please use DD/MM/YYYY.\n";
+        }
+    }
+
+    // 显示预约列表（与之前相同）
     cout << "\nAppointments on " << date << endl;
     cout << "---------------------------------------------------------------------\n";
     cout << left << setw(15) << "Appointment" << setw(12) << "Patient"
@@ -761,7 +756,7 @@ void displayTodayAppointments(const vector<Appointment>& appointments) {
     for (int i = 0; i < (int)appointments.size(); i++) {
         if (appointments[i].appointmentDate == date) {
             found = true;
-            int doctorIndex = getDoctorIndex(appointments[i].doctorID);
+            int doctorIndex = findDoctorIndex(doctors, appointments[i].doctorID);
             string doctorName = (doctorIndex != -1) ? doctorNames[doctorIndex] : "Unknown";
             cout << left << setw(15) << appointments[i].appointmentID
                  << setw(12) << appointments[i].patientID
@@ -771,4 +766,6 @@ void displayTodayAppointments(const vector<Appointment>& appointments) {
         }
     }
     if (!found) cout << "No appointments found for this date.\n";
+
+    pressZeroToExit(); 
 }

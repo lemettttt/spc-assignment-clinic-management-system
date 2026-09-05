@@ -118,7 +118,7 @@ int getValidatedMenuChoice(const string& prompt, int minOption, int maxOption);
 // ============================================================
 
 // Pause until user presses 0 (for viewing lists/reports)
-void pressZeroToContinue();
+void pressZeroToExit();
 
 // Pause until user presses Enter (lighter, for operation feedback)
 void waitForEnter();

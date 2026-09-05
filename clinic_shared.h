@@ -20,7 +20,7 @@ const int    MAX_LOGIN_ATTEMPTS    = 3;         // Max login attempts allowed
 const double GENERAL_CONSULT_FEE   = 45.00;     // General consultation fee
 const double SPECIALIST_CONSULT_FEE = 80.00;    // Specialist consultation fee
 const double SST_RATE              = 0.06;      // Service tax rate 6%
-const int MAX_DOCTORS = 3;                      // Maximum number of doctors
+const int    MAX_DOCTORS           = 3;         // Maximum number of doctors
 
 // Color constants
 const int COLOR_RESET        = 7;    // White (default)
@@ -39,7 +39,7 @@ void setColor(int color);
 struct Staff {
     string username;
     string password;
-    string role;    // e.g., "Nurse", "Doctor"
+    string role;
 };
 
 // ============================================================
@@ -62,14 +62,14 @@ struct Appointment {
     int appointmentID;
     int patientID;
     int doctorID;
-    string doctorType;      // "General" or "Specialist"
+    string doctorType;
     string appointmentDate;
     string timeSlot;
-    string status;          // "Pending" / "Completed" / "Cancelled"
+    string status;
 };
 
 // ============================================================
-// STRUCT 3: PrescribedMedicine (must be defined before Consultation)
+// STRUCT 3: PrescribedMedicine
 // ============================================================
 struct PrescribedMedicine {
     int medicineID;
@@ -118,7 +118,7 @@ struct BillRecord {
     int billID;
     int patientID;
     int doctorID;
-    int consultationID;      // Links to the exact consultation
+    int consultationID;
     string serviceDate;
     double consultationFee;
     double medicineFee;
@@ -161,5 +161,16 @@ extern int nextMedicineID;
 
 void seedSharedData();
 void initDoctorData();
+
+// ============================================================
+// Shared Helper Functions (for finding indices)
+// ============================================================
+
+int findPatientIndex(const vector<Patient>& patients, int patientID);
+int findMedicineIndex(const vector<Medicine>& medicineInventory, int medicineID);
+int findDoctorIndex(const vector<Doctor>& doctors, int doctorID);
+int findConsultationIndex(const vector<Consultation>& consultations, int consultationID);
+int findLatestConsultation(const vector<Consultation>& consultations, int patientID);
+int findConsultationByID(const vector<Consultation>& consultations, int consultationID);
 
 #endif

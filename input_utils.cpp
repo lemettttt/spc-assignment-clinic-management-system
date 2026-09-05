@@ -370,12 +370,12 @@ int getValidatedMenuChoice(const string& prompt, int minOption, int maxOption) {
 // Wait for 0 to Continue
 // ============================================================
 
-void pressZeroToContinue() {
+void pressZeroToExit() {
     string line;
     int choice;
 
     while (true) {
-        cout << "\nPress 0 to continue: ";
+        cout << "\nPress 0 to exit: ";
         getline(cin, line);
 
         if (line.empty()) {
@@ -402,13 +402,8 @@ void pressZeroToContinue() {
 
 void waitForEnter() {
     cout << "\nPress Enter to continue...";
-    // NOTE: no cin.ignore() here. Every input function in this file uses
-    // getline(), which always consumes its own trailing newline, so the
-    // buffer is already clean by the time we get here. Adding cin.ignore()
-    // before cin.get() made this block TWICE (once silently eating the
-    // user's real Enter key via ignore(), then waiting again via get()),
-    // which was the "need to press Enter twice" bug.
-    cin.get();
+    string dummy;
+    getline(cin, dummy);
 }
 
 // ============================================================

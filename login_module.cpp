@@ -91,7 +91,8 @@ void registerUser() {
 
     staffList.push_back({ username, password, "" });
     cout << "\n[System] Account registered successfully! You can now log in.\n";
-    pressZeroToContinue();
+    waitForEnter();
+    clearScreen();
 }
 
 // ============================================================
@@ -100,36 +101,58 @@ void registerUser() {
 
 bool loginUser() {
     string username, password;
+    const int MAX_ATTEMPTS = 3;
 
-    cout << "\n----- LOGIN -----\n";
-    cout << "(Enter 0 to go back)\n";
+    // ----- Username Attempts (3 times) -----
+    int userAttempts = 0;
+    int idx = -1;
 
-    username = readNonEmptyLine("Enter username: ");
+    while (userAttempts < MAX_ATTEMPTS) {
+        cout << "\n----- LOGIN -----";
+        cout << "\n(Enter 0 to go back)\n";
+        username = readNonEmptyLine("Enter Username (" + to_string(userAttempts + 1) + "/" + to_string(MAX_ATTEMPTS) + "): ");
 
-    if (username == "0") {
-        cout << "[System] Login cancelled.\n";
-        return false;
+        if (username == "0") {
+            cout << "[System] Login cancelled.\n";
+            return false;
+        }
+
+        idx = findStaffIndex(username);
+
+        if (idx != -1) {
+            break;
+        } else {
+            userAttempts++;
+            cout << "[ERROR] Username not found. Please register first.\n";
+            if (userAttempts >= MAX_ATTEMPTS) {
+                cout << "[System] Maximum username attempts reached.\n";
+                return false;
+            }
+        }
     }
 
-    password = readNonEmptyLine("Enter password: ");
+    // ----- Password Attempts (3 times) -----
+    int passAttempts = 0;
 
-    int idx = findStaffIndex(username);
-    if (idx != -1) {
+    while (passAttempts < MAX_ATTEMPTS) {
+        cout << "\n----- PASSWORD -----\n";
+        cout << "Username: " << username << "\n";
+        password = readNonEmptyLine("Enter Password (" + to_string(passAttempts + 1) + "/" + to_string(MAX_ATTEMPTS) + "): ");
+
         if (staffList[idx].password == password) {
             cout << "\n[System] Login successful! Welcome, " << username << ".\n";
             return true;
-        }
-        else {
+        } else {
+            passAttempts++;
             cout << "[ERROR] Incorrect password. Please try again.\n";
-            pressZeroToContinue();
-            return false;
+            if (passAttempts >= MAX_ATTEMPTS) {
+                cout << "[System] Maximum password attempts reached.\n";
+                return false;
+            }
         }
     }
-    else {
-        cout << "[ERROR] Username not found. Please register first.\n";
-        pressZeroToContinue();
-        return false;
-    }
+
+    return false;
 }
 
 // ============================================================
@@ -141,7 +164,6 @@ void authenticationGate() {
     bool loggedIn = false;
 
     do {
-        clearScreen();
         setColor(COLOR_DARK_BLUE);
         cout << "\n  ============================================================\n";
         cout << "  |              TARUMT CLINIC - STAFF LOGIN                 |\n";
@@ -177,7 +199,7 @@ void authenticationGate() {
             exit(0);
         default:
             cout << "[ERROR] Invalid choice. Please enter 1-3.\n";
-            pressZeroToContinue();
+            waitForEnter();
         }
     } while (!loggedIn);
 

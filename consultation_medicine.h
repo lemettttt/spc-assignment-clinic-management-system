@@ -72,30 +72,6 @@ void displayFollowUpReminder(
     const vector<Patient>& patients
 );
 
-// ============================================================
-// Helper Functions
-// ============================================================
-
-int findDoctorIndex(
-    const vector<Doctor>& doctors,
-    int doctorID
-);
-
-int findPatientIndex(
-    const vector<Patient>& patients,
-    int patientID
-);
-
-int findMedicineIndex(
-    const vector<Medicine>& medicineInventory,
-    int medicineID
-);
-
-int findConsultationIndex(
-    const vector<Consultation>& consultations,
-    int consultationID
-);
-
 void displayDoctorList(const vector<Doctor>& doctors);
 
 bool checkStockAvailability(

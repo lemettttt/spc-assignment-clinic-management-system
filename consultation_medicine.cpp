@@ -11,6 +11,7 @@
 #include <sstream>
 #include "consultation_medicine.h"
 #include "input_utils.h"
+#include "patient_module.h"
 
 using namespace std;
 
@@ -58,6 +59,7 @@ void recordConsultation(
     newConsultation.consultationID = nextConsultationID++;
     cout << "Auto-generated Consultation ID: " << newConsultation.consultationID << endl;
 
+    viewAllPatients();
     // Get and validate Patient ID with retry option
     while (true) {
         int patientID = getNonNegativeInt("Enter Patient ID (or 0 to cancel): ");
@@ -65,6 +67,7 @@ void recordConsultation(
         if (patientID == 0) {
             cout << "Operation cancelled.\n";
             nextConsultationID--;
+            waitForEnter();
             return;
         }
         
@@ -88,6 +91,7 @@ void recordConsultation(
         if (doctorID == 0) {
             cout << "Operation cancelled.\n";
             nextConsultationID--;
+            waitForEnter();
             return;
         }
         
@@ -194,6 +198,7 @@ void viewMedicalHistory(
     
     int patientID;
     int patientIndex;
+    viewAllPatients();
     
     // Keep asking until valid patient ID is entered or user cancels
     while (true) {
@@ -201,6 +206,7 @@ void viewMedicalHistory(
         
         if (patientID == 0) {
             cout << "Operation cancelled.\n";
+            waitForEnter();
             return;
         }
         
@@ -261,7 +267,7 @@ void viewMedicalHistory(
     if (!found) {
         cout << "No consultation history found.\n";
     }
-    pressZeroToContinue();
+    pressZeroToExit();
 }
 
 /* ============================================================
@@ -312,13 +318,13 @@ void prescribeMedicine(
 
     if (consultations.empty()) {
         cout << "No consultation records available.\n";
-        pressZeroToContinue();
+        waitForEnter();
         return;
     }
 
     if (medicineInventory.empty()) {
         cout << "No medicine records available for prescription.\n";
-        pressZeroToContinue();
+        waitForEnter();
         return;
     }
 
@@ -330,6 +336,7 @@ void prescribeMedicine(
         
         if (consultationID == 0) {
             cout << "Operation cancelled.\n";
+            waitForEnter();
             return;
         }
         
@@ -367,6 +374,7 @@ void prescribeMedicine(
             if (medicineID == 0) {
                 if (consultation.prescribedMedicines.empty()) {
                     cout << "No medicines prescribed. Operation cancelled.\n";
+                    waitForEnter();
                     return;
                 }
                 // Break out of medicine selection
@@ -382,6 +390,7 @@ void prescribeMedicine(
         }
         
         if (medicineID == 0) {
+            waitForEnter();
             break; // User finished adding medicines
         }
 
@@ -392,6 +401,7 @@ void prescribeMedicine(
             
             if (quantity == 0) {
                 cout << "Operation cancelled.\n";
+                waitForEnter();
                 return;
             }
             
@@ -445,7 +455,7 @@ void displayMedicineList(
 ) {
     if (medicineInventory.empty()) {
         cout << "\nNo medicine records found.\n";
-        pressZeroToContinue();   
+        waitForEnter();
         return;
     }
 
@@ -472,7 +482,7 @@ void displayMedicineList(
              << endl;
     }
     
-    pressZeroToContinue();  
+    waitForEnter();
 }
 
 /* ============================================================
@@ -486,11 +496,13 @@ void updateMedicineStock(
 
     // Get and validate Medicine ID with retry option
     int medicineID;
+    displayMedicineList(medicineInventory);
     while (true) {
         medicineID = getNonNegativeInt("Enter Medicine ID (or 0 to cancel): ");
         
         if (medicineID == 0) {
             cout << "Operation cancelled.\n";
+            waitForEnter();
             return;
         }
         
@@ -505,7 +517,7 @@ void updateMedicineStock(
     int index = findMedicineIndex(medicineInventory, medicineID);
     if (index == -1) {
         cout << "Medicine not found.\n";
-        pressZeroToContinue();
+        waitForEnter();
         return;
     }
 
@@ -515,6 +527,7 @@ void updateMedicineStock(
         
         if (quantity == 0) {
             cout << "Operation cancelled.\n";
+            waitForEnter();
             return;
         }
         break;
@@ -550,7 +563,7 @@ void addNewMedicine(
     // Check if ID already exists (safety check)
     if (findMedicineIndex(medicineInventory, newMedicine.medicineID) != -1) {
         cout << "Error: Medicine ID already exists. Please restart.\n";
-        pressZeroToContinue();
+        pressZeroToExit();
         nextMedicineID--;  // Rollback
         return;
     }
@@ -589,11 +602,13 @@ void searchMedicine(
 
     // Get and validate Medicine ID with retry option
     int medicineID;
+    displayMedicineList(medicineInventory);
     while (true) {
         medicineID = getNonNegativeInt("Enter Medicine ID (or 0 to cancel): ");
         
         if (medicineID == 0) {
             cout << "Operation cancelled.\n";
+            waitForEnter();
             return;
         }
         
@@ -608,7 +623,7 @@ void searchMedicine(
     int index = findMedicineIndex(medicineInventory, medicineID);
     if (index == -1) {
         cout << "Medicine not found.\n";
-        pressZeroToContinue();
+        waitForEnter();
         return;
     }
 
@@ -623,7 +638,7 @@ void searchMedicine(
     cout << "Expiry Date: " << medicine.expiryDate << endl;
     cout << "==========================================\n";
 
-    pressZeroToContinue();
+    pressZeroToExit();
 }
 
 /* ============================================================
@@ -637,11 +652,13 @@ void deleteMedicine(
 
     // Get and validate Medicine ID with retry option
     int medicineID;
+    displayMedicineList(medicineInventory);
     while (true) {
         medicineID = getNonNegativeInt("Enter Medicine ID (or 0 to cancel): ");
         
         if (medicineID == 0) {
             cout << "Operation cancelled.\n";
+            waitForEnter();
             return;
         }
         
@@ -656,7 +673,7 @@ void deleteMedicine(
     int index = findMedicineIndex(medicineInventory, medicineID);
     if (index == -1) {
         cout << "Medicine not found.\n";
-        pressZeroToContinue();
+        waitForEnter();
         return;
     }
 
@@ -706,7 +723,7 @@ void displayLowStockWarning(
     if (!found) {
         cout << "All medicine stock levels are sufficient.\n";
     }
-    pressZeroToContinue();
+    pressZeroToExit();
 }
 
 /* ============================================================
@@ -720,7 +737,7 @@ void checkExpiryDate(
 
     if (medicineInventory.empty()) {
         cout << "No medicine records found.\n";
-        pressZeroToContinue();
+        waitForEnter();
         return;
     }
 
@@ -765,7 +782,7 @@ void checkExpiryDate(
         }
         cout << endl;
     }
-    pressZeroToContinue();
+    pressZeroToExit();
 }
 
 /* ============================================================
@@ -845,7 +862,7 @@ void displayFollowUpReminder(
     if (!found) {
         cout << "No follow-up reminders found.\n";
     }
-    pressZeroToContinue();
+    waitForEnter();
 }
 
 /* ============================================================
@@ -906,7 +923,7 @@ void consultationMedicineMenu(
             case 9: displayLowStockWarning(medicineInventory, 10); break;
             case 10: checkExpiryDate(medicineInventory); break;
             case 11: displayFollowUpReminder(consultations, patients); break;
-            case 12: cout << "\nReturning to Main Menu...\n"; break;
+            case 12: clearScreen(); break;
             default: cout << "\nInvalid choice. Please try again.\n";
         }
     } while (choice != 12);

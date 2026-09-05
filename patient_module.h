@@ -8,6 +8,7 @@
 // ============================================================
 
 bool validateICFormat(const string& ic);
+bool equalsIgnoreCase(const string& a, const string& b);
 bool checkDuplicateIC(const string& ic);
 
 int searchPatientByIC(const string& ic);

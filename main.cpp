@@ -77,12 +77,10 @@ int main() {
     clearScreen();
     seedSharedData();
     displayIntroScreen();
-    waitForEnter();
     authenticationGate();
 
     int choice;
     do {
-        clearScreen();
         displayMainMenu();
         choice = readValidatedInt("  Enter your choice: ", 1, 5);
 
@@ -102,13 +100,14 @@ int main() {
             case 5:
                 cout << "\n  [System] Logging out and returning to login screen...\n";
                 waitForEnter();
+                clearScreen();
                 authenticationGate();   // Return to login screen
                 // Reset choice to avoid exiting the outer loop
                 choice = 0;
                 break;
             default:
                 cout << "\n  [ERROR] Invalid choice. Please enter 1-5.\n";
-                pressZeroToContinue();
+                pressZeroToExit();
         }
     } while (choice != 5);
 

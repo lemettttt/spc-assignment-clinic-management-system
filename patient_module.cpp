@@ -34,6 +34,17 @@ bool validateICFormat(const string& ic) {
     return true;
 }
 
+bool equalsIgnoreCase(const string& a, const string& b) {
+    if (a.length() != b.length()) return false;
+    
+    for (size_t i = 0; i < a.length(); i++) {
+        if (tolower((unsigned char)a[i]) != tolower((unsigned char)b[i])) {
+            return false;
+        }
+    }
+    return true;
+}
+
 // Check for duplicate IC number
 bool checkDuplicateIC(const string& ic) {
     for (int i = 0; i < (int)patients.size(); i++) {
@@ -55,7 +66,7 @@ int searchPatientByIC(const string& ic) {
 // Search patient by name; returns index or -1
 int searchPatientByName(const string& name) {
     for (int i = 0; i < (int)patients.size(); i++) {
-        if (patients[i].name == name)
+        if (equalsIgnoreCase(patients[i].name, name))
             return i;
     }
     return -1;
@@ -85,11 +96,11 @@ void displayPatientRecord(const Patient& p) {
 
 // Display all patient records in a table
 void viewAllPatients() {
-    cout << "\n===================== ALL PATIENTS =====================\n";
+    cout << "\n============================= ALL PATIENTS =============================\n";
 
     if (patients.empty()) {
         cout << "  (No patient records found)\n";
-        pressZeroToContinue();   
+        pressZeroToExit();
         return;
     }
 
@@ -123,8 +134,9 @@ void viewAllPatients() {
 
         cout << "\n";
     }
-    cout << "==========================================================\n";
-    pressZeroToContinue();   
+
+    cout << "==========================================================================\n";
+    waitForEnter();
 }
 
 // Register a new patient
@@ -141,6 +153,7 @@ void registerNewPatient() {
 
         if (ic == "0") {
             cout << "[System] Registration cancelled.\n";
+            waitForEnter();
             return;
         }
 
@@ -155,7 +168,7 @@ void registerNewPatient() {
         int idx = searchPatientByIC(ic);
         cout << "[ERROR] Duplicate IC. Already registered as Patient ID " << patients[idx].patientID << " (" << patients[idx].name << ").\n";
         cout << "[System] Registration cancelled.\n";
-        pressZeroToContinue();   
+        waitForEnter();
         return;
     }
 
@@ -188,25 +201,35 @@ void registerNewPatient() {
 void updatePatientInfo() {
     if (patients.empty()) {
         cout << "\n[ERROR] No patient records found. Please register a patient first.\n";
-        pressZeroToContinue();   
+        waitForEnter();
         return;
     }
 
     string ic;
+    int idx;
+
     cout << "\n----- UPDATE PATIENT INFORMATION -----\n";
-    cout << "\nEnter Patient IC to update (or 0 to cancel): ";
-    getline(cin, ic);
 
-    if (ic == "0") {
-        cout << "[System] Update cancelled.\n";
-        return;
-    }
+    // Loop until valid IC is entered or user cancels
+    while (true) {
+        cout << "\nEnter Patient IC to update (or 0 to cancel): ";
+        getline(cin, ic);
 
-    int idx = searchPatientByIC(ic);
-    if (idx == -1) {
-        cout << "[ERROR] Patient with this IC not found.\n";
-        pressZeroToContinue();  
-        return;
+        if (ic == "0") {
+            cout << "[System] Update cancelled.\n";
+            waitForEnter();
+            return;
+        }
+
+        idx = searchPatientByIC(ic);
+
+        if (idx == -1) {
+            cout << "[ERROR] Patient with this IC not found. Please try again or enter 0 to cancel.\n";
+            continue;
+        }
+
+        // Valid patient found, exit loop
+        break;
     }
 
     cout << "Current record:\n";
@@ -219,10 +242,16 @@ void updatePatientInfo() {
     cout << "  4. Gender\n";
     cout << "  5. Phone Number\n";
     cout << "  6. Allergy History\n";
-    cout << "  7. Cancel\n";
-    int choice = readValidatedInt("\nEnter your choice: ", 1, 7);
+    cout << "  0. Cancel / Back\n";
+    int choice = readValidatedInt("\nEnter your choice: ", 0, 6);
 
     switch (choice) {
+        case 0: {
+            cout << "[System] Update cancelled.\n";
+            waitForEnter();
+            break;
+        }
+
         case 1: {
             string newIC;
             while (true) {
@@ -295,12 +324,12 @@ void updatePatientInfo() {
             cout << "[System] Allergy history updated successfully.\n";
             break;
         }
-
-        case 7:
-            cout << "[System] Update cancelled.\n";
-            break;
     }
-    waitForEnter();  
+
+    // Only pause if an actual update was performed (choice != 0)
+    if (choice != 0) {
+        waitForEnter();
+    }
 }
 
 // ============================================================
@@ -310,6 +339,7 @@ void patientManagementMenu() {
     int choice;
 
     do {        
+        clearScreen();
         setColor(COLOR_DARK_BLUE);
         cout << "\n  ============================================================\n";
         cout << "  |                 PATIENT MANAGEMENT MODULE                |\n";
@@ -344,42 +374,71 @@ void patientManagementMenu() {
             case 2: {
                 if (patients.empty()) {
                     cout << "\n[ERROR] No patient records found. Please register a patient first.\n";
-                    pressZeroToContinue();   
+                    pressZeroToExit();
                     break;
                 }
-                string ic = readNonEmptyLine("\nEnter IC to search (or 0 to cancel): ");
-                if (ic == "0") {
-                    break;
-                }
-                int idx = searchPatientByIC(ic);
-                if (idx == -1) {
-                    cout << "[ERROR] Patient not found.\n";
-                } else {
+
+                string ic;
+                int idx;
+
+                while (true) {
+                    cout << "\nEnter IC to search (or 0 to cancel): ";
+                    getline(cin, ic);
+
+                    if (ic == "0") {
+                        cout << "[System] Search cancelled.\n";
+                        waitForEnter();
+                        break; 
+                    }
+
+                    idx = searchPatientByIC(ic);
+
+                    if (idx == -1) {
+                        cout << "[ERROR] Patient not found. Please try again.\n";
+                        continue;
+                    }
+
                     displayPatientRecord(patients[idx]);
+                    pressZeroToExit();   // ✅ 仅查看记录后要求按0退出
+                    break;
                 }
-                pressZeroToContinue();   
                 break;
             }
 
             case 3: {
                 if (patients.empty()) {
                     cout << "\n[ERROR] No patient records found. Please register a patient first.\n";
-                    pressZeroToContinue();   
+                    pressZeroToExit();
                     break;
                 }
-                string name = readNonEmptyLine("\nEnter name to search (or 0 to cancel): ");
-                if (name == "0") {
-                    break;
-                }
-                int idx = searchPatientByName(name);
-                if (idx == -1) {
-                    cout << "[ERROR] Patient not found.\n";
-                } else {
+
+                string name;
+                int idx;
+
+                while (true) {
+                    cout << "\nEnter name to search (or 0 to cancel): ";
+                    getline(cin, name);
+
+                    if (name == "0") {
+                        cout << "[System] Search cancelled.\n";
+                        waitForEnter();
+                        break;                     
+                    }
+
+                    idx = searchPatientByName(name);
+
+                    if (idx == -1) {
+                        cout << "[ERROR] Patient not found. Please try again or enter 0 to cancel.\n";
+                        continue;
+                    }
+
                     displayPatientRecord(patients[idx]);
+                    pressZeroToExit();   // ✅ 查看记录后按0退出
+                    break;
                 }
-                pressZeroToContinue();   
                 break;
             }
+
             case 4: 
                 updatePatientInfo(); 
                 break;
@@ -389,12 +448,12 @@ void patientManagementMenu() {
                 break;
 
             case 6: 
-                cout << "\n[System] Returning to Main Menu...\n"; 
+                clearScreen(); 
                 break;
 
             default: 
                 cout << "[ERROR] Invalid choice. Please enter 1-6.\n";
-                pressZeroToContinue();   
+                pressZeroToExit();
         }
     } while (choice != 6);
 }
